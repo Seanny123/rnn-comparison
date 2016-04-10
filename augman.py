@@ -12,10 +12,10 @@ import ipdb
 
 def aug(dataset, desc, amount, func, kwargs):
     """iterate through each class, augment it and save the result"""
+    new_data = []
 
-    new_data = [
-        np.zeros((amount, desc["dims"], desc["t_len"]*1000))
-    ] * desc["n_classes"]
+    for _ in range(desc["n_classes"]):
+        new_data.append(np.zeros((amount, desc["dims"], desc["t_len"]*1000)))
 
     # TODO: tell these for-loops to calm the hell down
     for c_i, cls in enumerate(dataset):
@@ -42,15 +42,16 @@ def aug(dataset, desc, amount, func, kwargs):
     # TODO: give option to append to an existing file if the filename already exists
     # especially with the same kwargs
     np.savez(filename, class_sig_list=new_data, class_desc=desc)
+
     return new_data
 
-# try gaussian and uniform
-def add_rand_noise(dataset, t_len, freq=10, scale=0.0, dist=nengo.dists.Gaussian):
+# TODO: try gaussian and uniform
+def add_rand_noise(dataset, t_len, freq=10, scale=0.2):
     """additive noise"""
     noise = WhiteSignal(t_len, freq).run(t_len)[:, 0] * scale
-    return d3_scale(dataset + noise)
+    return dataset + noise
 
-def conv_rand_noise(dataset, t_len, freq=10, scale=1, dist=nengo.dists.Gaussian):
+def conv_rand_noise(dataset, t_len, freq=10, scale=1):
     """convolve with noise"""
     noise = WhiteSignal(t_len, freq).run(t_len)[:, 0] * scale
     return d3_scale(np.convolve(dataset, noise, mode="same"))

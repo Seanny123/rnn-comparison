@@ -5,6 +5,8 @@ from constants import *
 from random import shuffle
 from scipy.linalg import sqrtm
 from scipy.interpolate import interp1d
+
+import matplotlib.pyplot as plt
 import ipdb
 
 class_type_list = ["cont_spec", "orth_spec", "disc_spec", "cont_packet",
@@ -111,10 +113,6 @@ def mk_cls_dataset(t_len, dims, n_classes=2, freq=10, class_type="cont_spec"):
                 raise TypeError("Unknown class data type: %s" %class_type)
 
         sig = np.array(sig)
-        if sig.shape != (dims, t_len/dt):
-            print(class_type)
-            ipdb.set_trace()
-
         assert sig.shape == (dims, t_len/dt)
         class_sig_list.append(sig)
 
