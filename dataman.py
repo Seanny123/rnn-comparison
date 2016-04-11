@@ -162,7 +162,7 @@ class DataFeed(object):
         # how much to pause between questions
         self.pause_time = PAUSE
         self.paused = False
-        self.q_duration = t_len * dt
+        self.q_duration = t_len
         self.correct = correct
 
         self.qs = dataset
@@ -199,7 +199,7 @@ class DataFeed(object):
         this is the main state machine of the network"""
         self.time += dt
 
-        if self.time > self.pause_time and self.time > self.q_duration:
+        if self.time > self.pause_time and self.time >= self.q_duration:
 
             # increment function
             if self.data_index < self.num_items - 1:
@@ -215,10 +215,14 @@ class DataFeed(object):
             self.sig_time = 0
         elif self.time > self.pause_time:
             self.paused = False
+            if self.sig_time == 500:
+                ipdb.set_trace()
+
             return_val = self.qs[self.indices[self.data_index]][:, self.sig_time]
             self.sig_time += 1
             return return_val
         else:
+            #print("Pased")
             self.paused = True
         return np.zeros(self.dims)
 
