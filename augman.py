@@ -15,13 +15,15 @@ def aug(dataset, desc, amount, func, kwargs):
     new_data = []
 
     for _ in range(desc["n_classes"]):
-        new_data.append(np.zeros((amount, desc["dims"], desc["t_len"]*1000)))
+        new_data.append(
+            np.zeros((amount, desc["dims"], int(desc["t_len"]*1000)))
+        )
 
     # TODO: tell these for-loops to calm the hell down
     for c_i, cls in enumerate(dataset):
         for s_i in xrange(amount):
             for d_i in xrange(desc["dims"]):
-                new_data[c_i][s_i, d_i] = func(dataset[c_i][d_i], desc["t_len"], **kwargs)
+                new_data[c_i][s_i, d_i] = func(dataset[c_i][0][d_i], desc["t_len"], **kwargs)
 
     filename = "./datasets/dataset_%scls_%s_%s_%s_%s_aug_%s" %(
         desc["class_type"],

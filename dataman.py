@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import ipdb
 
 class_type_list = ["cont_spec", "orth_spec", "disc_spec", "cont_packet",
-                   "cont_freq", "cont_amp"]
+                   "cont_freq", "cont_amp", "flat"]
 
 def d3_scale(dat, out_range=(-1, 1), in_range=None):
     if in_range == None:
@@ -35,7 +35,7 @@ def ortho_nearest(d):
     p = nengo.dists.UniformHypersphere(surface=True).sample(d, d)
     return np.dot(p, np.linalg.inv(sqrtm(np.dot(p.T, p))))
 
-def mk_cls_dataset(t_len, dims, n_classes=2, freq=10, class_type="cont_spec"):
+def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"):
     """given length t_len, dimensions dim, make number of classes given 
     n_classes in terms of a specific signal"""
 
@@ -48,12 +48,13 @@ def mk_cls_dataset(t_len, dims, n_classes=2, freq=10, class_type="cont_spec"):
     class_desc = {}
     for n_i in range(n_classes):
         sig = []
-
+        # because you might have multiple examples of a signal signal
+        ex = []
         for d_i in range(dims):
 
             if class_type is "cont_spec":
                 """classify using the specific white noise signal"""
-                sig.append(
+                ex.append(
                     d3_scale(
                         WhiteSignal(
                             t_len, freq, seed=(d_i+n_i*n_classes)
@@ -70,7 +71,7 @@ def mk_cls_dataset(t_len, dims, n_classes=2, freq=10, class_type="cont_spec"):
                 v_range = np.linspace(0, t_len, freq)
                 t_range = np.arange(0, t_len, dt)
 
-                sig = interp1d(v_range, vecs, kind="cubic")(t_range)
+                sig.append(interp1d(v_range, vecs, kind="cubic")(t_range))
                 break
 
             elif class_type is "disc_spec":
@@ -84,7 +85,7 @@ def mk_cls_dataset(t_len, dims, n_classes=2, freq=10, class_type="cont_spec"):
                 for w_i in xrange(white_vals.shape[0]):
                     white_noise[w_i*freq:(w_i+1)*freq] = white_vals[w_i]
 
-                sig.append(white_noise)
+                ex.append(white_noise)
 
             elif class_type is "cont_packet":
                 """classify using a mix of FM and AM packets"""
@@ -109,11 +110,22 @@ def mk_cls_dataset(t_len, dims, n_classes=2, freq=10, class_type="cont_spec"):
                 class_desc.append(amp)
                 raise NotImplementedError("Nope")
 
+            elif class_type is "flat":
+                """fool-proof flat signals for testing"""
+                flat_range = np.concatenate((
+                    np.linspace(-1, -0.25, np.floor(n_classes/2.0)),
+                    np.linspace(1, 0.25, np.ceil(n_classes/2.0))
+                ))
+                ex.append(
+                    np.ones(int(t_len/dt))*flat_range[n_i]
+                )
+
             else:
                 raise TypeError("Unknown class data type: %s" %class_type)
 
+        sig.append(ex)
         sig = np.array(sig)
-        assert sig.shape == (dims, t_len/dt)
+        assert sig.shape == (1, dims, t_len/dt)
         class_sig_list.append(sig)
 
     # write and return
@@ -129,9 +141,17 @@ def mk_cls_dataset(t_len, dims, n_classes=2, freq=10, class_type="cont_spec"):
     np.savez(filename, class_sig_list=class_sig_list, class_desc=class_desc)
     return (class_sig_list, class_desc)
 
+def make_correct(dataset):
+    """ make a giant array of correct answers """
+    correct = []
+    for c_i, cls in enumerate(list(dataset)):
+        correct.extend([c_i] * cls.shape[0])
+    return correct
+
+
 class DataFeed(object):
 
-    def __init__(self, dataset, correct, t_len, filename="derp", log=True):
+    def __init__(self, dataset, correct, t_len, dims, filename="derp", log=True):
         self.data_index = 0
 
 
@@ -140,14 +160,14 @@ class DataFeed(object):
         # how often to write the answer into a file
         self.ans_log_period = 0.05
         # how much to pause between questions
-        self.pause_time = 0.01
+        self.pause_time = PAUSE
         self.paused = False
         self.q_duration = t_len * dt
         self.correct = correct
 
         self.qs = dataset
         self.num_items = dataset.shape[0]
-        self.dims = dataset.shape[1]
+        self.dims = dims
         self.indices = list(np.arange(self.num_items))
 
         if log:
@@ -165,6 +185,13 @@ class DataFeed(object):
         if t % self.ans_log_period == 0:
             self.f_r.write("%s, %s, %s" %(x, self.correct[self.indices[self.data_index]], int(self.paused)))
 
+    def get_answer(self, t):
+        """signal for correct answer, maybe should be added as a dimension to feed?"""
+        if self.time > self.pause_time and self.time < self.q_duration:
+            return self.correct[self.indices[self.data_index]]
+        else:
+            return np.zeros(self.dims)
+
 
     def feed(self, t):
         """feed the answer into the network
@@ -177,9 +204,9 @@ class DataFeed(object):
             # increment function
             if self.data_index < self.num_items - 1:
                 self.data_index += 1
-                print("Increment: %s" %self.data_index)
+                #print("Increment: %s" %self.data_index)
             else:
-                print("Shuffling\n")
+                #print("Shuffling\n")
                 self.status.write("Shuffling\n")
                 shuffle(self.indices)
                 self.data_index = 0
@@ -196,12 +223,13 @@ class DataFeed(object):
         return np.zeros(self.dims)
 
 
-def create_feed_net(dataset, correct, t_len):
+def create_feed_net(dataset, correct, t_len, dims):
     """function for feeding data"""
     with nengo.Network(label="feed") as feed:
-        feed.d_f = DataFeed(dataset, correct, t_len)
-        feed.q_in = nengo.Node(feed.d_f.feed, size_out=dataset.shape[1])
-        feed.set_ans = nengo.Node(feed.d_f.set_answer, size_in=dataset.shape[1])
-
+        feed.d_f = DataFeed(dataset, correct, t_len, dims)
+        feed.q_in = nengo.Node(feed.d_f.feed, size_out=dims)
+        feed.set_ans = nengo.Node(feed.d_f.set_answer, size_in=dims)
+        # make optional?
+        feed.get_ans = nengo.Node(feed.d_f.get_answer, size_out=dims)
 
     return feed

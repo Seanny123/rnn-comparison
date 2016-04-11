@@ -10,9 +10,10 @@ from augman import *
 import ipdb
 
 # make some classes
-freq_list = [10, 10, 150,]
-for i in range(2, 3):
-    mk_res = mk_cls_dataset(1, 2, n_classes=3, freq=freq_list[i], class_type=class_type_list[i])
+freq_list = [10, 10, 150, 0,]
+class_type_list = ["cont_spec", "orth_spec", "disc_spec", "flat"]
+for i in range(3, 4):
+    mk_res = mk_cls_dataset(t_len=0.5, dims=2, n_classes=3, freq=freq_list[i], class_type=class_type_list[i])
     aug_res = aug(mk_res[0], mk_res[1], 1, add_rand_noise, {})
 
 # iterate through each class, augment it and save the result

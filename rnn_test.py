@@ -7,6 +7,7 @@ def main(t_len, dims, n_classes, val_func, prob_type):
     # if not discrete, discretize input signal?
     # train up using Lasagne
 
+    # make number of batches equal to one sig or multiple sigs?
     N_BATCH=10
 
     l_in = lasagne.layers.InputLayer(shape=(N_BATCH, t_len, dims))
