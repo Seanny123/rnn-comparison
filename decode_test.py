@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ipdb
 
+from constants import *
 
 n_neurons = 50
 tau = 0.1
@@ -17,7 +18,7 @@ with train_model:
 
     normal = nengo.Node(size_in=dims, size_out=dims)
 
-    state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims)
+    state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims, seed=SEED)
     nengo.Connection(q_in, state, synapse=None)
     nengo.Connection(state, normal)
 
@@ -53,7 +54,7 @@ with test_model:
     q_in = nengo.Node(lambda t: t-1)
     output = nengo.Node(size_in=dims, size_out=dims)
     normal = nengo.Node(size_in=dims, size_out=dims)
-    state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims)
+    state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims, seed=SEED)
 
     nengo.Connection(q_in, state, synapse=None)
     nengo.Connection(state.neurons, output, transform=decoders.T)
