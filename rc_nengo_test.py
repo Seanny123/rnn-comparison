@@ -13,7 +13,7 @@ from post import *
 def main(t_len, dims, n_classes, dataset, testset):
 
     sim_len = dataset[0][0].shape[1]
-    n_neurons = 50
+    n_neurons = 200
     tau = 0.1
 
     # this makes sure the reccurent weights don't cause the firing rates to explode
@@ -27,7 +27,8 @@ def main(t_len, dims, n_classes, dataset, testset):
         feed_net = create_feed_net(dataset[0], dataset[1], t_len, dims, n_classes) 
         normal = nengo.Node(size_in=dims, size_out=dims)
 
-        state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims, seed=SEED)
+        state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims,
+                               radius=np.sqrt(2), seed=SEED)
         nengo.Connection(state.neurons, state.neurons,
                  transform=weights / n_neurons, synapse=tau)
 
@@ -71,7 +72,8 @@ def main(t_len, dims, n_classes, dataset, testset):
         output = nengo.Node(size_in=n_classes, size_out=n_classes)
         normal = nengo.Node(size_in=dims, size_out=dims)
 
-        state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims, seed=SEED)
+        state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims,
+                               radius=np.sqrt(2), seed=SEED)
         nengo.Connection(state.neurons, state.neurons,
                          transform=weights / n_neurons, synapse=tau)
 
