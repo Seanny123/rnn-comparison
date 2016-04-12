@@ -3,6 +3,7 @@ import random
 import numpy as np
 from constants import *
 
+# this doesn't work for Nengo
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -17,7 +18,7 @@ def make_run_args(fi, dims, t_steps):
     dat = fi["class_sig_list"]
     cls_num = dat.shape[0]
     sig_num = dat.shape[1]
-    return (dat.reshape((int(cls_num*sig_num), dims, t_steps)), make_correct(dat))
+    return (dat.reshape((int(cls_num*sig_num), dims, t_steps)), make_correct(dat, dims))
 
 # load a dataset for training
 fi = np.load("datasets/dataset_flatcls_0.5_2_3_0.npz")

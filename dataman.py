@@ -71,7 +71,7 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
                 v_range = np.linspace(0, t_len, freq)
                 t_range = np.arange(0, t_len, dt)
 
-                sig.append(interp1d(v_range, vecs, kind="cubic")(t_range))
+                ex = interp1d(v_range, vecs, kind="cubic")(t_range)
                 break
 
             elif class_type is "disc_spec":
@@ -125,6 +125,10 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
 
         sig.append(ex)
         sig = np.array(sig)
+        if sig.shape != (1, dims, t_len/dt):
+            print(class_type)
+            ipdb.set_trace()
+
         assert sig.shape == (1, dims, t_len/dt)
         class_sig_list.append(sig)
 
@@ -141,17 +145,20 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
     np.savez(filename, class_sig_list=class_sig_list, class_desc=class_desc)
     return (class_sig_list, class_desc)
 
-def make_correct(dataset):
+def make_correct(dataset, n_classes):
     """ make a giant array of correct answers """
     correct = []
     for c_i, cls in enumerate(list(dataset)):
-        correct.extend([c_i] * cls.shape[0])
+        #correct.extend([c_i+1] * cls.shape[0])
+        cor = np.zeros((n_classes, cls.shape[0]))
+        cor[c_i, :] = 1
+        correct.extend(cor)
     return correct
 
 
 class DataFeed(object):
 
-    def __init__(self, dataset, correct, t_len, dims, filename="derp", log=True):
+    def __init__(self, dataset, correct, t_len, dims, n_classes, filename="derp", log=True):
         self.data_index = 0
 
 
@@ -163,12 +170,13 @@ class DataFeed(object):
         self.pause_time = PAUSE
         self.paused = False
         self.q_duration = t_len
-        self.correct = correct
+        self.correct = np.eye(3)#correct
 
         self.qs = dataset
         self.num_items = dataset.shape[0]
         self.dims = dims
-        self.indices = list(np.arange(self.num_items))
+        self.n_classes = n_classes
+        self.indices = [0, 1, 2]#list(np.arange(self.num_items))
 
         if log:
             self.status = open("results/%s" %filename, "w")
@@ -190,7 +198,7 @@ class DataFeed(object):
         if self.time > self.pause_time and self.time < self.q_duration:
             return self.correct[self.indices[self.data_index]]
         else:
-            return np.zeros(self.dims)
+            return np.zeros(self.n_classes)
 
 
     def feed(self, t):
@@ -227,13 +235,13 @@ class DataFeed(object):
         return np.zeros(self.dims)
 
 
-def create_feed_net(dataset, correct, t_len, dims):
+def create_feed_net(dataset, correct, t_len, dims, n_classes):
     """function for feeding data"""
     with nengo.Network(label="feed") as feed:
-        feed.d_f = DataFeed(dataset, correct, t_len, dims)
+        feed.d_f = DataFeed(dataset, correct, t_len, dims, n_classes)
         feed.q_in = nengo.Node(feed.d_f.feed, size_out=dims)
-        feed.set_ans = nengo.Node(feed.d_f.set_answer, size_in=dims)
+        feed.set_ans = nengo.Node(feed.d_f.set_answer, size_in=n_classes)
         # make optional?
-        feed.get_ans = nengo.Node(feed.d_f.get_answer, size_out=dims)
+        feed.get_ans = nengo.Node(feed.d_f.get_answer, size_out=n_classes)
 
     return feed
