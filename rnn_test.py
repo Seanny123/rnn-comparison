@@ -10,7 +10,7 @@ def main(t_len, dims, n_classes, val_func, prob_type):
     # make number of batches equal to one sig or multiple sigs?
     N_BATCH=10
 
-    l_in = lasagne.layers.InputLayer(shape=(N_BATCH, t_len, dims))
+    l_in = lasagne.layers.InputLayer(shape=(N_BATCH, t_len/dt, dims))
     # do I need a mask or not?
 
     l_rec = lasagne.layers.RecurrentLayer(
