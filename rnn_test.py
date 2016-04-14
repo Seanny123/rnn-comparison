@@ -23,7 +23,8 @@ def main(t_len, dims, n_classes, dataset, testset):
     nonlin = lasagne.nonlinearities.tanh
     w_init = lasagne.init.HeUniform
 
-    l_in = lasagne.layers.InputLayer(shape=(2,))
+    # accept any one-dimensional vector into the input
+    l_in = lasagne.layers.InputLayer(shape=(None,))
 
     # reshape the input, because the Nengo process outputs a 1 dimensional vector
     # and RNNs can't process that
@@ -37,15 +38,7 @@ def main(t_len, dims, n_classes, dataset, testset):
         W_hid_to_hid=w_init(),
         nonlinearity=nonlin, only_return_final=True)
 
-    # apparently I need to reshape on output so each step is processed independently
-    # maybe this should be a soft-max?
-    # Taken from: http://lasagne.readthedocs.org/en/latest/modules/layers/recurrent.html#examples
-    l_reshape_out = lasagne.layers.ReshapeLayer(l_rec, shape=(-1, N_HIDDEN))
-    l_dense = lasagne.layers.DenseLayer(l_reshape_out, num_units=n_classes, nonlinearity=nonlin)
-
-    # reshape to the actual desired dimensions
-    # Taken from: http://lasagne.readthedocs.org/en/latest/modules/layers/recurrent.html#examples
-    #l_final = lasagne.layers.ReshapeLayer(l_dense, shape=(n_classes,))
+    l_dense = lasagne.layers.DenseLayer(l_rec, num_units=n_classes, nonlinearity=nonlin)
 
     # train in Nengo
 
@@ -74,8 +67,10 @@ def main(t_len, dims, n_classes, dataset, testset):
 
     sim = nengo_lasagne.Simulator(net)
 
+    # OH GOD, WHERE IS THIS FLOAT MISMATCH COMING FROM
+    #ipdb.set_trace()
     # TODO: play with the learning rate to see if you can get it work on little training data
-    sim.train({input_node: dataset[0]}, {output_node: dataset[1]},
+    sim.train({input_node: dataset[0]}, {output_node: dataset[1].T.reshape(int(t_len/dt), 1, -1)},
               n_epochs=1, minibatch_size=N_BATCH,
               optimizer=lasagne.updates.adagrad,
               optimizer_kwargs={"learning_rate": 0.01},
