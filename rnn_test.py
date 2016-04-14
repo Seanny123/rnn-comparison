@@ -4,6 +4,10 @@ import nengo
 from nengo.processes import PresentInput
 
 import ipdb
+import sys
+#from IPython.core import ultratb
+#sys.excepthook = ultratb.FormattedTB(mode='Verbose',
+#     color_scheme='Linux', call_pdb=1)
 
 from constants import *
 
@@ -11,29 +15,37 @@ from constants import *
 def main(t_len, dims, n_classes, dataset, testset):
     """Test the vanilla RNN with Lasagne"""
 
-    # if not discrete, discretize input signal?
     # train up using Lasagne
 
-    # make number of batches equal to one sig or multiple sigs?
     N_BATCH = 1
     GRAD_CLIP = 100
     N_HIDDEN = 100
     nonlin = lasagne.nonlinearities.tanh
     w_init = lasagne.init.HeUniform
 
-    # `None` indicated a variable batch size
-    l_in = lasagne.layers.InputLayer(shape=(None,))
+    l_in = lasagne.layers.InputLayer(shape=(dims,))
 
-    l_reshape = lasagne.layers.ReshapeLayer(l_in, shape=(-1, dims))
+    # reshape the input, because that's what's done in the nengo_lasagne demo, but
+    # I'm not sure what this is accomplishing
+    l_reshape_in = lasagne.layers.ReshapeLayer(l_in, shape=(-1, dims))
 
+    # make the recurrent network
+    # Taken from: https://github.com/Lasagne/Lasagne/blob/master/examples/recurrent.py
     l_rec = lasagne.layers.RecurrentLayer(
-        l_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
+        l_reshape_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
         W_in_to_hid=w_init(),
         W_hid_to_hid=w_init(),
         nonlinearity=nonlin, only_return_final=True)
 
-    # this is definitely wrong, 
-    l_out = lasagne.layers.DenseLayer(l_rec, num_units=n_classes, nonlinearity=nonlin)
+    # apparently I need to reshape on output so each step is processed independently
+    # maybe this should be a soft-max?
+    # Taken from: http://lasagne.readthedocs.org/en/latest/modules/layers/recurrent.html#examples
+    l_reshape_out = lasagne.layers.ReshapeLayer(l_rec, shape=(-1, N_HIDDEN))
+    l_dense = lasagne.layers.DenseLayer(l_reshape_out, num_units=n_classes, nonlinearity=nonlin)
+
+    # reshape to the actual desired dimensions
+    # Taken from: http://lasagne.readthedocs.org/en/latest/modules/layers/recurrent.html#examples
+    l_final = lasagne.layers.ReshapeLayer(l_dense, shape=(n_classes,))
 
     # train in Nengo
 
@@ -52,7 +64,7 @@ def main(t_len, dims, n_classes, dataset, testset):
         input_node = nengo.Node(output=PresentInput(testset[0], dt))
         
         # insert the convolutional network we defined above
-        rnn_layer = nengo_lasagne.layers.LasagneNode(output=l_out, size_in=dims)
+        rnn_layer = nengo_lasagne.layers.LasagneNode(output=l_final, size_in=dims)
 
         # output node
         output_node = nengo.Node(size_in=n_classes)
