@@ -23,11 +23,11 @@ def main(t_len, dims, n_classes, dataset, testset):
     nonlin = lasagne.nonlinearities.tanh
     w_init = lasagne.init.HeUniform
 
-    l_in = lasagne.layers.InputLayer(shape=(dims,))
+    l_in = lasagne.layers.InputLayer(shape=(2,))
 
-    # reshape the input, because that's what's done in the nengo_lasagne demo, but
-    # I'm not sure what this is accomplishing
-    l_reshape_in = lasagne.layers.ReshapeLayer(l_in, shape=(-1, dims))
+    # reshape the input, because the Nengo process outputs a 1 dimensional vector
+    # and RNNs can't process that
+    l_reshape_in = lasagne.layers.ReshapeLayer(l_in, shape=(N_BATCH, 1, dims))
 
     # make the recurrent network
     # Taken from: https://github.com/Lasagne/Lasagne/blob/master/examples/recurrent.py
@@ -45,7 +45,7 @@ def main(t_len, dims, n_classes, dataset, testset):
 
     # reshape to the actual desired dimensions
     # Taken from: http://lasagne.readthedocs.org/en/latest/modules/layers/recurrent.html#examples
-    l_final = lasagne.layers.ReshapeLayer(l_dense, shape=(n_classes,))
+    #l_final = lasagne.layers.ReshapeLayer(l_dense, shape=(n_classes,))
 
     # train in Nengo
 
@@ -59,12 +59,10 @@ def main(t_len, dims, n_classes, dataset, testset):
         net.config[nengo.Connection].set_param("insert_weights",
                                                nengo.params.BoolParam(False))
 
-        # is this the problem?
-        # input node will just present one input image per timestep
         input_node = nengo.Node(output=PresentInput(testset[0], dt))
         
         # insert the convolutional network we defined above
-        rnn_layer = nengo_lasagne.layers.LasagneNode(output=l_final, size_in=dims)
+        rnn_layer = nengo_lasagne.layers.LasagneNode(output=l_dense, size_in=dims)
 
         # output node
         output_node = nengo.Node(size_in=n_classes)
