@@ -1,7 +1,6 @@
 # based off https://github.com/tcstewar/testing_notebooks/blob/master/Reservoir.ipynb
 
 import nengo
-import scipy.io
 import numpy as np
 
 import ipdb
@@ -12,7 +11,6 @@ from post import *
 
 def main(t_len, dims, n_classes, dataset, testset):
 
-    sim_len = dataset[0][0].shape[1]
     n_neurons = 200
     tau = 0.1
 
@@ -57,11 +55,9 @@ def main(t_len, dims, n_classes, dataset, testset):
     # save the decoding weigths?
     solver = nengo.solvers.LstsqL2(reg=0.02)
     print("getting decoders")
-    # TODO: could just get the error from here instead of plotting
-    # Talk to Terry about time-series solving
     # Try a communication channel
     decoders, info = solver(sim_train.data[p_spikes], sim_train.data[p_target])
-    #print("rmse: %s" %info["rmse"])
+    print("rmse: %s" %info["rmse"])
 
     # run the test data with new decoding weights
     # set the decoding weights as transforms on a connection

@@ -147,12 +147,15 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
 
 def make_correct(dataset, n_classes):
     """ make a giant array of correct answers """
+    # TODO: use integers to save memory?
     correct = []
-    for c_i, cls in enumerate(list(dataset)):
-        #correct.extend([c_i+1] * cls.shape[0])
-        cor = np.zeros((n_classes, cls.shape[0]))
-        cor[c_i, :] = 1
+    for c_i in range(dataset.shape[0]):
+        cor = np.zeros((dataset.shape[1], n_classes))
+        cor[:, c_i] = 1
         correct.extend(cor)
+    correct = np.array(correct)
+    assert correct.shape == (dataset.shape[0]*dataset.shape[1],
+                            n_classes)
     return correct
 
 
