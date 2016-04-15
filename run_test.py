@@ -16,25 +16,20 @@ def make_run_args(fi, dims, n_classes, t_steps, ann=False):
 
     if ann:
         pause_size = int(PAUSE/dt)
-        ann_shape = int(cls_num*sig_num*(t_steps+pause_size))
 
-        dat = np.concatenate(
-            (np.zeros((int(cls_num*sig_num*dims), pause_size)),
-            dat.reshape((int(cls_num*sig_num*dims), t_steps))),
-            axis=1
-        ).reshape((ann_shape, dims))
+        zer = np.zeros((int(cls_num*sig_num*dims), pause_size))
+        re_zer = dat.reshape((int(cls_num*sig_num*dims), t_steps))
+        dat = np.concatenate((zer, re_zer), axis=1).reshape((-1, 1, dims))
 
         cor = make_correct(
             fi["class_sig_list"],
             n_classes
         )
-        cor = np.concatenate(
-            (np.zeros((n_classes*sig_num, n_classes, pause_size)),
-            # stretch it to fit the time slots
-            # the reshape for concat
-            np.repeat(cor, t_steps, axis=1).reshape(n_classes*sig_num, n_classes, t_steps)),
-            axis=2
-        ).reshape((-1, t_steps+pause_size))
+        
+        zer = np.zeros((n_classes*sig_num, n_classes, pause_size))
+        re_zer = np.repeat(cor, t_steps, axis=1).reshape(n_classes*sig_num, n_classes, t_steps)
+        cor = np.concatenate((zer, re_zer), axis=2).reshape((n_classes, -1))
+        cor = cor.T.reshape((-1, 1, n_classes))
         return (dat, cor)
     else:
         final_shape = (int(cls_num*sig_num), dims, t_steps)

@@ -30,7 +30,7 @@ def main(t_len, dims, n_classes, dataset, testset):
 
     # reshape the input, because the Nengo process outputs a 1 dimensional vector
     # and RNNs can't process that
-    l_reshape_in = lasagne.layers.ReshapeLayer(l_in, shape=(N_BATCH, 1, dims))
+    l_reshape_in = lasagne.layers.ReshapeLayer(l_in, shape=(-1, 1, dims))
 
     # make the recurrent network
     # Taken from: https://github.com/Lasagne/Lasagne/blob/master/examples/recurrent.py
