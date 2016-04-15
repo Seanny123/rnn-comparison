@@ -2,6 +2,8 @@ import lasagne
 import nengo_lasagne
 import nengo
 from nengo.processes import PresentInput
+import theano
+theano.config.floatX = "float32"
 
 import ipdb
 import sys
@@ -36,7 +38,7 @@ def main(t_len, dims, n_classes, dataset, testset):
         l_reshape_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
         W_in_to_hid=w_init(),
         W_hid_to_hid=w_init(),
-        nonlinearity=nonlin, only_return_final=True)
+        nonlinearity=nonlin)#, only_return_final=True)
 
     l_dense = lasagne.layers.DenseLayer(l_rec, num_units=n_classes, nonlinearity=nonlin)
 
@@ -67,11 +69,10 @@ def main(t_len, dims, n_classes, dataset, testset):
 
     sim = nengo_lasagne.Simulator(net)
 
-    # OH GOD, WHERE IS THIS FLOAT MISMATCH COMING FROM
     #ipdb.set_trace()
     # TODO: play with the learning rate to see if you can get it work on little training data
-    sim.train({input_node: dataset[0]}, {output_node: dataset[1].T.reshape(int(t_len/dt), 1, -1)},
-              n_epochs=1, minibatch_size=N_BATCH,
+    sim.train({input_node: dataset[0]}, {output_node: dataset[1]},
+              #n_epochs=3, minibatch_size=None,
               optimizer=lasagne.updates.adagrad,
               optimizer_kwargs={"learning_rate": 0.01},
               # since we're doing categorisation, this objective function is fine
