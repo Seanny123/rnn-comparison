@@ -5,11 +5,9 @@ from nengo.processes import PresentInput
 import theano
 theano.config.floatX = "float32"
 
+import matplotlib.pyplot as plt
 import ipdb
 import sys
-#from IPython.core import ultratb
-#sys.excepthook = ultratb.FormattedTB(mode='Verbose',
-#     color_scheme='Linux', call_pdb=1)
 
 from constants import *
 
@@ -40,7 +38,7 @@ def main(t_len, dims, n_classes, dataset, testset):
         W_hid_to_hid=w_init(),
         nonlinearity=nonlin)#, only_return_final=True)
 
-    l_dense = lasagne.layers.DenseLayer(l_rec, num_units=n_classes, nonlinearity=nonlin)
+    l_dense = lasagne.layers.DenseLayer(l_rec, num_units=n_classes, nonlinearity=lasagne.nonlinearities.softmax)
 
     # train in Nengo
 
@@ -74,7 +72,7 @@ def main(t_len, dims, n_classes, dataset, testset):
     sim.train({input_node: dataset[0]}, {output_node: dataset[1]},
               #n_epochs=3, minibatch_size=None,
               optimizer=lasagne.updates.adagrad,
-              optimizer_kwargs={"learning_rate": 0.01},
+              optimizer_kwargs={"learning_rate": 0.005},
               # since we're doing categorisation, this objective function is fine
               objective=lasagne.objectives.categorical_crossentropy)
 
@@ -82,4 +80,6 @@ def main(t_len, dims, n_classes, dataset, testset):
     sim.run_steps(testset[0].shape[0])
 
     output = sim.data[p].squeeze()
+    plt.plot(output)
+    plt.show()
     ipdb.set_trace()
