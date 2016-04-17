@@ -4,6 +4,7 @@ import ipdb
 from constants import *
 import rc_nengo_test
 import rnn_test
+import svm_nengo_test
 from dataman import make_correct
 
 
@@ -39,12 +40,12 @@ def make_run_args(fi, dims, n_classes, t_steps, ann=False):
 # load a dataset for training
 fi = np.load("datasets/dataset_flatcls_0.5_2_3_0.npz")
 desc = fi["class_desc"].item()
-dat_arg = make_run_args(fi, desc["dims"], desc["n_classes"], int(desc["t_len"]/dt), ann=True)
+dat_arg = make_run_args(fi, desc["dims"], desc["n_classes"], int(desc["t_len"]/dt))
 
 # do the same for the test set
 fi = np.load("datasets/dataset_flatcls_0.5_2_3_0.npz")
-test_arg = make_run_args(fi, desc["dims"], desc["n_classes"], int(desc["t_len"]/dt), ann=True)
+test_arg = make_run_args(fi, desc["dims"], desc["n_classes"], int(desc["t_len"]/dt))
 
 # run the specific test
 #rc_nengo_test.main(desc["t_len"], desc["dims"], desc["n_classes"], dat_arg, test_arg)
-rnn_test.main(desc["t_len"]+PAUSE, desc["dims"], desc["n_classes"], dat_arg, test_arg)
+svm_nengo_test.main(desc["t_len"]+PAUSE, desc["dims"], desc["n_classes"], dat_arg, test_arg)

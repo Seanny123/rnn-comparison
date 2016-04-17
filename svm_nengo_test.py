@@ -1,37 +1,70 @@
 # based off of Aaron's SVM
 
 import nengo
+from nengolib.synapses import HeteroSynapse, Bandpass
 import scipy.io
+from sklearn import svm
 
-def main(t_len, dims, n_classes, val_func, prob_type):
+from constants import *
+from dataman import *
+from post import *
+
+def multisynapse(src, dest, sub_features):
+
+    synapses = [Bandpass(freq, Q) for (freq, Q) in sub_features]
+    syn = nengo.Node(size_in=1, output=HeteroSynapse(synapses, dt=dt))
+
+    nengo.Connection(src, syn, synapse=None)
+    nengo.Connection(
+        syn, dest.neurons, synapse=None,
+        function=lambda x, transform=np.squeeze(dest.encoders): transform*x)
+
+def main(t_len, dims, n_classes, dataset, testset):
 
     n_neurons = 200
     tau = 0.1
-
-    # this makes sure the reccurent weights don't cause the firing rates to explode
-    weights = np.random.uniform(-0.5, 0.5, size=(n_neurons, n_neurons))
-    scale = 1.0 / np.max(np.abs(np.linalg.eigvals(weights)**2))
-    weights *= scale
 
     # make a model and run it to get spiking data
     # as acquired when passed through multiple bandpass filters
     train_model = nengo.Network()
     with train_model:
         feed_net = create_feed_net(dataset[0], dataset[1], t_len, dims, n_classes)
-        normal = nengo.Node(size_in=dims, size_out=dims)
 
-        state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims,
-                               radius=np.sqrt(2), seed=SEED)
-        nengo.Connection(state.neurons, state.neurons,
-                 transform=weights / n_neurons, synapse=tau)
+        state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED)
+        state.add_neuron_output()
 
-        nengo.Connection(feed_net.q_in, state, synapse=None)
-        nengo.Connection(state, normal)
+        nengo.Connection(feed_net.q_in, state.input, synapse=None)
+
+        # setup the feature craziness
+        freq_range = (0, 500)
+        Q_range = (2, 50)
+        features_per_dim = 400
+        feat_pops = []
+        feat_list = []
+
+        for dim in range(dims):
+            # this declaration needed for the multisynapse transform
+            encoders = nengo.dists.UniformHypersphere(
+                        surface=True).sample(features_per_dim, 1)
+            feat_pop = nengo.Ensemble(features_per_dim, 1, encoders=encoders)
+            feat_pops.append(feat_pop)
+
+            sub_features = zip(
+                nengo.dists.Uniform(*freq_range).sample(features_per_dim),
+                nengo.dists.Uniform(*Q_range).sample(features_per_dim)
+            )
+            feat_list.append(sub_features)
+            multisynapse(state.ensembles[dim], feat_pop, sub_features)
 
         p_sig = nengo.Probe(feed_net.q_in, synapse=None)
         p_target = nengo.Probe(feed_net.get_ans, synapse=None)
-        p_spikes = nengo.Probe(state.neurons, synapse=tau)
-        p_normal = nengo.Probe(normal, synapse=tau)
+
+        p_normal = nengo.Probe(state.output, synapse=tau)
+
+        p_features = [
+            nengo.Probe(
+                feat_pop.neurons, sample_every=0.1, synapse=tau)
+            for feat_pop in feat_pops]
 
     print("training simulation start")
     sim_train = nengo.Simulator(train_model)
@@ -46,10 +79,11 @@ def main(t_len, dims, n_classes, val_func, prob_type):
     #plt.legend()
     plt.show()
 
-    # pass the spiking data and the target to train an SVM
-    solver = nengo.solvers.LstsqL2(reg=0.02)
+    # pass the feature data and the target to train an SVM
     print("Training SVM")
-    clf = svm.LinearSVC().fit(*(X, Y))
+    # format [n_samples, n_features], [n_samples]
+    ipdb.set_trace()
+    clf = svm.LinearSVC().fit(X, Y)
     # Need to use clf.classes_, clf.coef_, clf.intercept_
     print("rmse: %s" %info["rmse"])
 
