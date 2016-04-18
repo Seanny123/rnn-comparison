@@ -44,13 +44,6 @@ def main(t_len, dims, n_classes, dataset, testset):
         sim_train.run((t_len + PAUSE)*dataset[0].shape[0])
     print("training simulation done")
 
-    plt.plot(sim_train.trange(), sim_train.data[p_sig], alpha=0.6)
-    plt.plot(sim_train.trange(), sim_train.data[p_target], alpha=0.6)
-    plt.plot(sim_train.trange(), sim_train.data[p_normal], alpha=0.4)
-    plt.ylim(-1.1, 1.1)
-    #plt.legend()
-    plt.show()
-
     # pass the spiking data and the target to a solver to get decoding weigths
     # save the decoding weigths?
     solver = nengo.solvers.LstsqL2(reg=0.02)
@@ -86,13 +79,9 @@ def main(t_len, dims, n_classes, dataset, testset):
     sim_test = nengo.Simulator(test_model)
     with sim_test:
         sim_test.run((t_len + PAUSE)*testset[0].shape[0])
-    print("test simulation start")
+    print("test simulation done")
 
     # TODO: analyse the dataset
     #return get_accuracy(sim.data[p_out], sim.data[p_correct])
     # For now, just plot the results
-    plt.plot(sim_test.trange(), nengo.Lowpass(0.01).filt(sim_test.data[p_out]), alpha=0.6)
-    plt.plot(sim_test.trange(), sim_test.data[p_correct], alpha=0.6)
-    #plt.legend()
-    plt.show()
     ipdb.set_trace()
