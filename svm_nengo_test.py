@@ -29,6 +29,7 @@ def main(t_len, dims, n_classes, dataset, testset):
     features_per_dim = 400
     feat_pops = []
     feat_list = []
+    sample_every = 0.005
 
     # make a model and run it to get spiking data
     # as acquired when passed through multiple bandpass filters
@@ -57,14 +58,14 @@ def main(t_len, dims, n_classes, dataset, testset):
             feat_list.append(sub_features)
             multisynapse(state.ensembles[dim], feat_pop, sub_features)
 
-        p_sig = nengo.Probe(feed_net.q_in, synapse=None)
-        p_target = nengo.Probe(feed_net.get_ans, synapse=None)
+        p_sig = nengo.Probe(feed_net.q_in, sample_every=sample_every, synapse=None)
+        p_target = nengo.Probe(feed_net.get_ans, sample_every=sample_every, synapse=None)
 
-        p_normal = nengo.Probe(state.output, synapse=tau)
+        p_normal = nengo.Probe(state.output, sample_every=sample_every, synapse=tau)
 
         p_features = [
             nengo.Probe(
-                feat_pop.neurons, sample_every=0.1, synapse=tau)
+                feat_pop.neurons, sample_every=sample_every, synapse=tau)
             for feat_pop in feat_pops]
 
     print("training simulation start")
@@ -73,36 +74,44 @@ def main(t_len, dims, n_classes, dataset, testset):
         sim_train.run((t_len + PAUSE)*dataset[0].shape[0])
     print("training simulation done")
 
-    plt.plot(sim_train.trange(), sim_train.data[p_sig], alpha=0.6)
-    plt.plot(sim_train.trange(), sim_train.data[p_target], alpha=0.6)
-    plt.plot(sim_train.trange(), sim_train.data[p_normal], alpha=0.4)
-    plt.ylim(-1.1, 1.1)
-    #plt.legend()
-    plt.show()
-
     # pass the feature data and the target to train an SVM
     print("Training SVM")
-    # format [n_samples, n_features], [n_samples]
-    ipdb.set_trace()
-    clf = svm.LinearSVC().fit(X, Y)
+
+    feature_num = features_per_dim*dims
+
+    # decode the labels into 1D (should be done in numpy)
+    yv = []
+    for tar_val in sim_train.data[p_target]:
+        if np.any(tar_val == 1):
+            yv.append(np.argmax(tar_val))
+        else:
+            yv.append(0)
+    yv = np.array(yv)
+
+    xv = np.zeros((yv.shape[0], feature_num))
+    for p_i, p_feat in enumerate(p_features):
+        xv[:, p_i*400:(p_i+1)*400] = sim_train.data[p_feat]
+
+    clf = svm.LinearSVC().fit(xv, yv)
     # Need to use clf.classes_, clf.coef_, clf.intercept_
 
     # this basically just forms the coefficients into weights, it's basically a reshape operation
-    weights = np.zeros((len(feature_list), features_per_dim, n_classes))
-    for i in feature_sliced:
+    weights = np.zeros((len(feat_list), features_per_dim, n_classes))
+    for i in xrange(feature_num):
         weights[
             i // features_per_dim, i % features_per_dim] = clf.coef_[:, i]
     intercept = clf.intercept_
 
+
     # run the test data with the SVM
-    with test_model:
+    with train_model:
         # this may not work
         feed_net.d_f.__init__(testset[0], testset[1], t_len, dims, n_classes)
 
         # synapses for smoothing, because that's important according to Aaron's paper
         predict_tau = 0.005
         lowpass = 0.05
-        tau_ratio = predic_tau / lowpass
+        tau_ratio = predict_tau / lowpass
 
         scores = nengo.Node(size_in=n_classes)
 
@@ -128,7 +137,7 @@ def main(t_len, dims, n_classes, dataset, testset):
         p_correct = nengo.Probe(feed_net.get_ans)
 
     print("test simulation start")
-    sim_test = nengo.Simulator(test_model)
+    sim_test = nengo.Simulator(train_model)
     with sim_test:
         sim_test.run((t_len + PAUSE)*testset[0].shape[0])
     print("test simulation start")
