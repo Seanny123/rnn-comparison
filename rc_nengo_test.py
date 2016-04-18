@@ -26,9 +26,9 @@ def main(t_len, dims, n_classes, dataset, testset):
         normal = nengo.Node(size_in=dims, size_out=dims)
 
         state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims,
-                               radius=np.sqrt(2), seed=SEED)
+                               radius=np.sqrt(dims), seed=SEED)
         nengo.Connection(state.neurons, state.neurons,
-                 transform=weights / n_neurons, synapse=tau)
+                 transform=weights / n_neurons, synapse=tau, seed=SEED)
 
         nengo.Connection(feed_net.q_in, state, synapse=None)
         nengo.Connection(state, normal)
@@ -57,7 +57,7 @@ def main(t_len, dims, n_classes, dataset, testset):
     print("getting decoders")
     # Try a communication channel
     decoders, info = solver(sim_train.data[p_spikes], sim_train.data[p_target])
-    print("rmse: %s" %info["rmse"])
+    print("got decoders")
 
     # run the test data with new decoding weights
     # set the decoding weights as transforms on a connection
@@ -69,9 +69,9 @@ def main(t_len, dims, n_classes, dataset, testset):
         normal = nengo.Node(size_in=dims, size_out=dims)
 
         state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims,
-                               radius=np.sqrt(2), seed=SEED)
+                               radius=np.sqrt(dims), seed=SEED)
         nengo.Connection(state.neurons, state.neurons,
-                         transform=weights / n_neurons, synapse=tau)
+                         transform=weights / n_neurons, synapse=tau, seed=SEED)
 
         nengo.Connection(feed_net.q_in, state, synapse=None)
         nengo.Connection(state.neurons, output, transform=decoders.T)
@@ -80,6 +80,7 @@ def main(t_len, dims, n_classes, dataset, testset):
 
         p_out = nengo.Probe(output)
         p_correct = nengo.Probe(feed_net.get_ans)
+        p_test_sig = nengo.Probe(feed_net.q_in, synapse=None)
 
     print("test simulation start")
     sim_test = nengo.Simulator(test_model)
@@ -92,7 +93,6 @@ def main(t_len, dims, n_classes, dataset, testset):
     # For now, just plot the results
     plt.plot(sim_test.trange(), nengo.Lowpass(0.01).filt(sim_test.data[p_out]), alpha=0.6)
     plt.plot(sim_test.trange(), sim_test.data[p_correct], alpha=0.6)
-    #plt.plot(sim_train.trange(), sim_train.data[p_normal], alpha=0.4)
     #plt.legend()
     plt.show()
     ipdb.set_trace()
