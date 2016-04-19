@@ -16,7 +16,7 @@ def aug(dataset, desc, amount, func, kwargs):
 
     for _ in range(desc["n_classes"]):
         new_data.append(
-            np.zeros((amount, desc["dims"], int(desc["t_len"]*1000)))
+            np.zeros((amount, desc["dims"], int(desc["t_len"]/dt)))
         )
 
     # TODO: tell these for-loops to calm the hell down
@@ -53,20 +53,22 @@ def add_rand_noise(dataset, t_len, freq=10, scale=0.2):
     noise = WhiteSignal(t_len, freq).run(t_len)[:, 0] * scale
     return dataset + noise
 
-def conv_rand_noise(dataset, t_len, freq=10, scale=1):
+def conv_rand_noise(dataset, t_len, freq=500, scale=0.001):
     """convolve with noise"""
     noise = WhiteSignal(t_len, freq).run(t_len)[:, 0] * scale
     return d3_scale(np.convolve(dataset, noise, mode="same"))
 
 def shot_noise(dataset, t_len, shots=3, width=2):
     """randomly add impulses in either direction"""
-    assert shots*width > t_len
+    t_len = t_len/dt
+    assert shots*width < t_len
     assert t_len % width == 0
     shot_ind = np.random.choice(int(t_len/width), replace=False, size=shots)
     shot_vals = np.random.choice([-1, 1], size=(shots, 1))
 
     # reshape into widths, index to add then flatten again
-    dataset.reshape((width, -1))[shot_ind, :] += shot_vals
+    #ipdb.set_trace()
+    dataset.reshape((-1, width))[shot_ind, :] += shot_vals
     # no need to rescale
     return dataset.flatten()
 
@@ -83,3 +85,16 @@ def offset(dataset, scale=0.1):
 def make_more(dataset):
     # won't work for '_spec' signals
     raise NotImplementedError("Nope")
+
+def lag(dataset, t_len, lags=3, width=10):
+    """add a random temporal lag"""
+    t_len = t_len/dt
+    assert lags*width < t_len
+    assert t_len % width == 0
+    lag_ind = np.random.choice(int(t_len/width), replace=False, size=lags)
+
+    # reshape into widths, index to add then flatten again
+    lag_vals = dataset.reshape((-1, width))[lag_ind, 0]
+    dataset.reshape((-1, width))[lag_ind, :] = (np.ones((width, lags)) * lag_vals).T
+    # no need to rescale
+    return dataset.flatten()
