@@ -210,7 +210,7 @@ class DataFeed(object):
         this is the main state machine of the network"""
         self.time += dt
 
-        if self.time > self.pause_time and self.time >= self.q_duration:
+        if self.time > self.pause_time and self.sig_time >= self.q_duration/dt:
 
             # increment function
             if self.data_index < self.num_items - 1:
