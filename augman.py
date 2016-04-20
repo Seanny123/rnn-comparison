@@ -98,3 +98,26 @@ def lag(dataset, t_len, lags=3, width=10):
     dataset.reshape((-1, width))[lag_ind, :] = (np.ones((width, lags)) * lag_vals).T
     # no need to rescale
     return dataset.flatten()
+
+def ann_shuffle(dat, cor, t_len, repeats=3):
+    """because online training is weird, shuffle the presentation order
+    of the signal, but repeat the dataset"""
+    sig_len = int((t_len + PAUSE)/dt)
+    sig_num = dat.shape[0]/sig_len
+    rp_len = dat.shape[0]
+    ind = np.arange(sig_num)
+
+    # this repition needs to be reshaped after repeating, maybe should use tile instead?
+    final_dat = np.tile(dat, (repeats, 1, 1))
+    final_cor = np.tile(cor, (repeats, 1, 1))
+    for r_i in xrange(1, repeats):
+        np.random.shuffle(ind)
+        dat_chunk = final_dat[r_i*rp_len:(r_i+1)*rp_len].reshape((sig_num, sig_len, 1, -1))
+        dat_chunk = dat_chunk[ind]
+        final_dat[r_i*rp_len:(r_i+1)*rp_len] = dat_chunk.reshape((rp_len, 1, -1))
+
+        cor_chunk = final_cor[r_i*rp_len:(r_i+1)*rp_len].reshape((sig_num, sig_len, 1, -1))
+        cor_chunk = cor_chunk[ind]
+        final_cor[r_i*rp_len:(r_i+1)*rp_len] = cor_chunk.reshape((rp_len, 1, -1))
+
+    return (final_dat, final_cor)

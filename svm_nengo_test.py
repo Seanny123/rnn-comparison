@@ -1,4 +1,4 @@
-# based off of Aaron's SVM
+# based off of Aaron's SVM network in http://compneuro.uwaterloo.ca/publications/voelker2016a.html
 
 import nengo
 from nengolib.synapses import HeteroSynapse, Bandpass
@@ -29,6 +29,7 @@ def main(t_len, dims, n_classes, dataset, testset):
     features_per_dim = 400
     feat_pops = []
     feat_list = []
+    enc_list = []
     sample_every = 0.005
 
     # make a model and run it to get spiking data
@@ -38,7 +39,6 @@ def main(t_len, dims, n_classes, dataset, testset):
         feed_net = create_feed_net(dataset[0], dataset[1], t_len, dims, n_classes)
 
         state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED)
-        state.add_neuron_output()
 
         nengo.Connection(feed_net.q_in, state.input, synapse=None)
 
@@ -47,6 +47,7 @@ def main(t_len, dims, n_classes, dataset, testset):
             # this declaration needed for the multisynapse transform
             encoders = nengo.dists.UniformHypersphere(
                         surface=True).sample(features_per_dim, 1)
+            enc_list.append(encoders)
             feat_pop = nengo.Ensemble(features_per_dim, 1, encoders=encoders,
                 seed=SEED+dim)
             feat_pops.append(feat_pop)
@@ -104,9 +105,13 @@ def main(t_len, dims, n_classes, dataset, testset):
 
 
     # run the test data with the SVM
-    with train_model:
-        # this may not work
-        feed_net.d_f.__init__(testset[0], testset[1], t_len, dims, n_classes)
+    test_model = nengo.Network()
+    with test_model:
+        feed_net = create_feed_net(testset[0], testset[1], t_len, dims, n_classes)
+
+        state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED)
+
+        nengo.Connection(feed_net.q_in, state.input, synapse=None)
 
         # synapses for smoothing, because that's important according to Aaron's paper
         predict_tau = 0.005
@@ -114,8 +119,8 @@ def main(t_len, dims, n_classes, dataset, testset):
         tau_ratio = predict_tau / lowpass
 
         scores = nengo.Node(size_in=n_classes)
-
         predict = nengo.networks.EnsembleArray(n_neurons, n_classes, seed=SEED+1)
+
         nengo.Connection(scores, predict.input, transform=tau_ratio,
             synapse=predict_tau)
         nengo.Connection(predict.input, predict.output,
@@ -125,8 +130,11 @@ def main(t_len, dims, n_classes, dataset, testset):
             w = weights[dim]
             subset = (w != 0).any(axis=1)
             assert subset.shape == (features_per_dim,)
+            feat_pop = nengo.Ensemble(features_per_dim, 1, encoders=enc_list[dim],
+                seed=SEED+dim)
+            multisynapse(state.ensembles[dim], feat_pop, feat_list[dim])
 
-            nengo.Connection(feat_pops[dim].neurons, scores,
+            nengo.Connection(feat_pop.neurons, scores,
                 transform=w[subset].T, synapse=None)
 
         bias = nengo.Node(output=[1], label="bias")
@@ -137,10 +145,10 @@ def main(t_len, dims, n_classes, dataset, testset):
         p_correct = nengo.Probe(feed_net.get_ans)
 
     print("test simulation start")
-    sim_test = nengo.Simulator(train_model)
+    sim_test = nengo.Simulator(test_model)
     with sim_test:
         sim_test.run((t_len + PAUSE)*testset[0].shape[0])
-    print("test simulation start")
+    print("test simulation done")
 
     # TODO: analyse the dataset
     #return get_accuracy(sim.data[p_out], sim.data[p_correct])

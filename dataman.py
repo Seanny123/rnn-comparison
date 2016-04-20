@@ -158,6 +158,35 @@ def make_correct(dataset, n_classes):
                             n_classes)
     return correct
 
+def make_run_args(fi, dims, n_classes, t_steps, ann=False):
+    """reshape before passing (stop organising by class) 
+    and get the correct-ans and pass that too"""
+    dat = fi["class_sig_list"]
+    cls_num = dat.shape[0]
+    sig_num = dat.shape[1]
+
+    if ann:
+        pause_size = int(PAUSE/dt)
+
+        zer = np.zeros((int(cls_num*sig_num*dims), pause_size))
+        re_zer = dat.reshape((int(cls_num*sig_num*dims), t_steps))
+        dat = np.concatenate((zer, re_zer), axis=1).reshape((dims, 1, -1)).T
+        ipdb.set_trace()
+
+        cor = make_correct(
+            fi["class_sig_list"],
+            n_classes
+        )
+        
+        zer = np.zeros((n_classes*sig_num, n_classes, pause_size))
+        re_zer = np.repeat(cor, t_steps, axis=1).reshape(n_classes*sig_num, n_classes, t_steps)
+        cor = np.concatenate((zer, re_zer), axis=2).reshape((n_classes, -1))
+        cor = cor.T.reshape((-1, 1, n_classes))
+        return (dat, cor)
+    else:
+        final_shape = (int(cls_num*sig_num), dims, t_steps)
+        return (dat.reshape(final_shape), make_correct(dat, n_classes))
+
 
 class DataFeed(object):
 
@@ -173,13 +202,13 @@ class DataFeed(object):
         self.pause_time = PAUSE
         self.paused = False
         self.q_duration = t_len
-        self.correct = np.eye(3)#correct
+        self.correct = correct
 
         self.qs = dataset
         self.num_items = dataset.shape[0]
         self.dims = dims
         self.n_classes = n_classes
-        self.indices = [0, 1, 2]#list(np.arange(self.num_items))
+        self.indices = list(np.arange(self.num_items))
 
         if log:
             self.status = open("results/%s" %filename, "w")
@@ -239,12 +268,11 @@ class DataFeed(object):
 
 
 def create_feed_net(dataset, correct, t_len, dims, n_classes):
-    """function for feeding data"""
+    """create network for feeding data"""
     with nengo.Network(label="feed") as feed:
         feed.d_f = DataFeed(dataset, correct, t_len, dims, n_classes)
         feed.q_in = nengo.Node(feed.d_f.feed, size_out=dims)
         feed.set_ans = nengo.Node(feed.d_f.set_answer, size_in=n_classes)
-        # make optional?
         feed.get_ans = nengo.Node(feed.d_f.get_answer, size_out=n_classes)
 
     return feed

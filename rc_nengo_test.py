@@ -81,7 +81,4 @@ def main(t_len, dims, n_classes, dataset, testset):
         sim_test.run((t_len + PAUSE)*testset[0].shape[0])
     print("test simulation done")
 
-    # TODO: analyse the dataset
-    #return get_accuracy(sim.data[p_out], sim.data[p_correct])
-    # For now, just plot the results
-    ipdb.set_trace()
+    return get_accuracy(sim_test.data[p_out], sim_test.data[p_correct], t_len)
