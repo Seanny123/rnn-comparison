@@ -18,8 +18,7 @@ def main(t_len, dims, n_classes, dataset, testset):
     # train up using Lasagne
 
     N_BATCH = 1
-    GRAD_CLIP = 100
-    N_HIDDEN = 100 # does this make the gradient disappear?
+    N_HIDDEN = 20 # does this make the gradient disappear?
     nonlin = lasagne.nonlinearities.tanh
     w_init = lasagne.init.HeUniform
 
@@ -27,18 +26,18 @@ def main(t_len, dims, n_classes, dataset, testset):
     l_in = lasagne.layers.InputLayer(shape=(None,))
 
     # reshape the input, because the Nengo process outputs a 1 dimensional vector
-    # and RNNs can't process that
+    # and the layers can't process that
     l_reshape_in = lasagne.layers.ReshapeLayer(l_in, shape=(-1, 1, dims))
 
     # make the recurrent network
     # Taken from: https://github.com/Lasagne/Lasagne/blob/master/examples/recurrent.py
-    l_rec = lasagne.layers.RecurrentLayer(
-        l_reshape_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
-        W_in_to_hid=w_init(),
-        W_hid_to_hid=w_init(),
-        nonlinearity=nonlin)#, only_return_final=True)
+    l_rec = lasagne.layers.DenseLayer(
+        l_reshape_in, num_units=N_HIDDEN,
+        nonlinearity=nonlin)
 
-    l_dense = lasagne.layers.DenseLayer(l_rec, num_units=n_classes, nonlinearity=lasagne.nonlinearities.softmax)
+    # output linearity has to be softmax or nothing works
+    l_dense = lasagne.layers.DenseLayer(l_rec, num_units=n_classes,
+        nonlinearity=lasagne.nonlinearities.softmax)
 
     # train in Nengo
 
@@ -67,10 +66,8 @@ def main(t_len, dims, n_classes, dataset, testset):
 
     sim = nengo_lasagne.Simulator(net)
 
-    #ipdb.set_trace()
-    # TODO: play with the learning rate to see if you can get it work on little training data
     sim.train({input_node: dataset[0]}, {output_node: dataset[1]},
-              #n_epochs=3, minibatch_size=None,
+              n_epochs=50, minibatch_size=510,
               optimizer=lasagne.updates.adagrad,
               optimizer_kwargs={"learning_rate": 0.001},
               # since we're doing categorisation, this objective function is fine
