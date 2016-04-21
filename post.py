@@ -16,7 +16,7 @@ def get_accuracy(ans, ground, t_len, sample_every=0.001):
     assumes sample_every < PAUSE"""
     t_len = t_len/dt
     pause_len = PAUSE/dt
-    sig_num = int(ans.shape[0] / (dt/sample_every) / (t_len+PAUSE))
+    sig_num = int(ans.shape[0] / (dt/sample_every) / (t_len+PAUSE/dt))
 
     ans_diff = np.zeros(sig_num)
     ground_diff = np.zeros(sig_num)
