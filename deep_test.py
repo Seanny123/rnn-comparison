@@ -18,7 +18,7 @@ def main(t_len, dims, n_classes, dataset, testset):
     # train up using Lasagne
 
     N_BATCH = 1
-    N_HIDDEN = 20 # does this make the gradient disappear?
+    N_HIDDEN = 10 # does this make the gradient disappear?
     nonlin = lasagne.nonlinearities.tanh
     w_init = lasagne.init.HeUniform
 
@@ -67,7 +67,7 @@ def main(t_len, dims, n_classes, dataset, testset):
     sim = nengo_lasagne.Simulator(net)
 
     sim.train({input_node: dataset[0]}, {output_node: dataset[1]},
-              n_epochs=50, minibatch_size=510,
+              #n_epochs=50, minibatch_size=510,
               optimizer=lasagne.updates.adagrad,
               optimizer_kwargs={"learning_rate": 0.001},
               # since we're doing categorisation, this objective function is fine

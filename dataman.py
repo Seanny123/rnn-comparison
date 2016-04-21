@@ -112,13 +112,15 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
 
             elif class_type is "flat":
                 """fool-proof flat signals for testing"""
+                '''
                 flat_range = np.concatenate((
                     np.linspace(-1, -0.25, np.floor(n_classes/2.0)),
                     np.linspace(1, 0.25, np.ceil(n_classes/2.0))
                 ))
-                ex.append(
-                    np.ones(int(t_len/dt))*flat_range[n_i]
-                )
+                '''
+                flat_range = np.linspace(0.25, 1, n_classes)
+                ex = np.ones((dims, int(t_len/dt)))*flat_range[n_i]
+                break
 
             else:
                 raise TypeError("Unknown class data type: %s" %class_type)
@@ -143,7 +145,7 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
     class_desc["SEED"] = SEED
 
     np.savez(filename, class_sig_list=class_sig_list, class_desc=class_desc)
-    return (class_sig_list, class_desc)
+    return (np.array(class_sig_list), class_desc)
 
 def make_correct(dataset, n_classes):
     """ make a giant array of correct answers """
@@ -161,7 +163,11 @@ def make_correct(dataset, n_classes):
 def make_run_args(fi, dims, n_classes, t_steps, ann=False):
     """reshape before passing (stop organising by class) 
     and get the correct-ans and pass that too"""
-    dat = fi["class_sig_list"]
+    if type(fi) == np.lib.npyio.NpzFile:
+        dat = fi["class_sig_list"]
+    else:
+        dat = fi
+
     cls_num = dat.shape[0]
     sig_num = dat.shape[1]
 
@@ -170,18 +176,24 @@ def make_run_args(fi, dims, n_classes, t_steps, ann=False):
 
         zer = np.zeros((int(cls_num*sig_num*dims), pause_size))
         re_zer = dat.reshape((int(cls_num*sig_num*dims), t_steps))
-        dat = np.concatenate((zer, re_zer), axis=1).reshape((dims, 1, -1)).T
-        ipdb.set_trace()
+        dat = np.concatenate((zer, re_zer), axis=1)
+        # TODO: How do you accomplish this with a reshape operation?
+        concat_list = []
+        for c_i in range(0, n_classes):
+            concat_list.append(dat[c_i*dims:(c_i+1)*dims, :])
+        dat = np.concatenate(concat_list, axis=1).T.reshape(-1, 1, dims)
+        assert np.all(dat[:pause_size,] == 0.0)
 
         cor = make_correct(
             fi["class_sig_list"],
             n_classes
         )
-        
+
         zer = np.zeros((n_classes*sig_num, n_classes, pause_size))
         re_zer = np.repeat(cor, t_steps, axis=1).reshape(n_classes*sig_num, n_classes, t_steps)
         cor = np.concatenate((zer, re_zer), axis=2).reshape((n_classes, -1))
         cor = cor.T.reshape((-1, 1, n_classes))
+        assert np.all(cor[:pause_size,] == 0.0)
         return (dat, cor)
     else:
         final_shape = (int(cls_num*sig_num), dims, t_steps)

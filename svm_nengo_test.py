@@ -128,14 +128,14 @@ def main(t_len, dims, n_classes, dataset, testset):
 
         for dim in range(dims):
             w = weights[dim]
-            subset = (w != 0).any(axis=1)
-            assert subset.shape == (features_per_dim,)
+            #subset = (w != 0).any(axis=1)
+            #assert subset.shape == (features_per_dim,)
             feat_pop = nengo.Ensemble(features_per_dim, 1, encoders=enc_list[dim],
                 seed=SEED+dim)
             multisynapse(state.ensembles[dim], feat_pop, feat_list[dim])
 
             nengo.Connection(feat_pop.neurons, scores,
-                transform=w[subset].T, synapse=None)
+                transform=w.T, synapse=None)
 
         bias = nengo.Node(output=[1], label="bias")
         nengo.Connection(bias, scores,
@@ -150,12 +150,4 @@ def main(t_len, dims, n_classes, dataset, testset):
         sim_test.run((t_len + PAUSE)*testset[0].shape[0])
     print("test simulation done")
 
-    # TODO: analyse the dataset
-    #return get_accuracy(sim.data[p_out], sim.data[p_correct])
-    # For now, just plot the results
-    plt.plot(sim_test.trange(), nengo.Lowpass(0.01).filt(sim_test.data[p_out]), alpha=0.6)
-    plt.plot(sim_test.trange(), sim_test.data[p_correct], alpha=0.6)
-    #plt.plot(sim_train.trange(), sim_train.data[p_normal], alpha=0.4)
-    #plt.legend()
-    plt.show()
-    ipdb.set_trace()
+    return get_accuracy(sim_test.data[p_out], sim_test.data[p_correct], t_len)

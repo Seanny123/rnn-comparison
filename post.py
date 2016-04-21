@@ -8,6 +8,7 @@ def get_accuracy_win(ans, ground, win=100):
     based off the average in and outside the window"""
     print("nope")
 
+# this really needs to be tested better
 def get_accuracy(ans, ground, t_len, sample_every=0.001):
     """return the amount of correct answers and the margin based off the average
     over the whole sample
@@ -36,7 +37,7 @@ def get_accuracy(ans, ground, t_len, sample_every=0.001):
             ans_diff[a_i] = sum_ans[g_i] - sum_ans[max_idx[1]]
         else:
             # if wrong, see how far the correct answer was behind the max
-            ans_diff[a_i] = sum_ans[max_idx[0]] - sum_ans[g_i]
+            ans_diff[a_i] = sum_ans[g_i] - sum_ans[max_idx[0]]
 
         ground_diff[a_i] = t_len - sum_ans[g_i]
 
