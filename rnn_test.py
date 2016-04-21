@@ -50,7 +50,7 @@ def main(t_len, dims, n_classes, dataset, testset):
         # created all the weight matrices we want in the above
         # Lasagne network.
         net.config[nengo.Connection].set_param("insert_weights",
-                                               nengo.params.BoolParam(False))
+                                               nengo.params.BoolParam("test", default=False))
 
         input_node = nengo.Node(output=PresentInput(testset[0], dt))
         
@@ -72,7 +72,7 @@ def main(t_len, dims, n_classes, dataset, testset):
     sim.train({input_node: dataset[0]}, {output_node: dataset[1]},
               #n_epochs=3, minibatch_size=None,
               optimizer=lasagne.updates.adagrad,
-              optimizer_kwargs={"learning_rate": 0.001},
+              optimizer_kwargs={"learning_rate": 0.01},
               # since we're doing categorisation, this objective function is fine
               objective=lasagne.objectives.categorical_crossentropy)
 
