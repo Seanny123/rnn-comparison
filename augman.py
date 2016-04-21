@@ -1,6 +1,6 @@
 # Different augmentation functions
 import nengo
-from nengo.processes import WhiteSignal
+from nengo.processes import WhiteSignal, WhiteNoise
 from dataman import d3_scale
 from constants import *
 import numpy as np
@@ -48,9 +48,12 @@ def aug(dataset, desc, amount, func, kwargs):
     return new_data
 
 # TODO: try gaussian and uniform
-def add_rand_noise(dataset, t_len, freq=10, scale=0.2):
+def add_rand_noise(dataset, t_len, freq=10, scale=0.2, sig=True):
     """additive noise"""
-    noise = WhiteSignal(t_len, freq).run(t_len)[:, 0] * scale
+    if sig:
+        noise = WhiteSignal(t_len, freq).run(t_len)[:, 0] * scale
+    else:
+        noise = WhiteNoise().run(t_len)[:, 0] * scale
     return dataset + noise
 
 def conv_rand_noise(dataset, t_len, freq=500, scale=0.001):

@@ -29,14 +29,20 @@ plt.show()
 '''
 
 # this performs well
-plt.title("Add WhiteNoise")
+plt.title("Add WhiteSignal")
 plt.plot(line_sig)
 plt.plot(white_sig)
 plt.plot(add_rand_noise(line_sig, t_len))
 plt.plot(add_rand_noise(white_sig, t_len))
 plt.show()
 
-# this performs well
+plt.title("Add WhiteNoise")
+plt.plot(line_sig)
+plt.plot(white_sig)
+plt.plot(add_rand_noise(line_sig, t_len, scale=0.005, sig=False))
+plt.plot(add_rand_noise(white_sig, t_len, scale=0.005, sig=False))
+plt.show()
+
 plt.title("Shot Noise")
 plt.plot(line_sig)
 plt.plot(white_sig)

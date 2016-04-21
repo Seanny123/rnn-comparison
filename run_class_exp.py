@@ -24,8 +24,8 @@ sys.excepthook = ultratb.FormattedTB(mode='Verbose',
 
 freq_list = [10, 10, 150,]
 class_type_list = ["cont_spec", "orth_spec", "disc_spec",]
-exp_iter = 5
-class_nums = [40]
+exp_iter = 10
+class_nums = [3, 5, 10, 20, 40]
 rc_acc = []
 svm_acc = []
 rc_diff = []
