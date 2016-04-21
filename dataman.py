@@ -202,7 +202,7 @@ def make_run_args(fi, dims, n_classes, t_steps, ann=False):
 
 class DataFeed(object):
 
-    def __init__(self, dataset, correct, t_len, dims, n_classes, filename="derp", log=True):
+    def __init__(self, dataset, correct, t_len, dims, n_classes, filename="derp", log=False):
         self.data_index = 0
 
 
@@ -221,6 +221,7 @@ class DataFeed(object):
         self.dims = dims
         self.n_classes = n_classes
         self.indices = list(np.arange(self.num_items))
+        self.log = log
 
         if log:
             self.status = open("results/%s" %filename, "w")
@@ -234,7 +235,7 @@ class DataFeed(object):
         the maximum confidence result is the right answer, it is considered
         correct"""
 
-        if t % self.ans_log_period == 0:
+        if t % self.ans_log_period == 0 and self.log:
             self.f_r.write("%s, %s, %s" %(x, self.correct[self.indices[self.data_index]], int(self.paused)))
 
     def get_answer(self, t):
@@ -259,7 +260,8 @@ class DataFeed(object):
                 #print("Increment: %s" %self.data_index)
             else:
                 #print("Shuffling\n")
-                self.status.write("Shuffling\n")
+                if self.log:
+                    self.status.write("Shuffling\n")
                 shuffle(self.indices)
                 self.data_index = 0
 
