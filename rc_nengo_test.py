@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from dataman import *
 from post import *
 
-def main(t_len, dims, n_classes, dataset, testset):
+def main(t_len, dims, n_classes, dataset, testset, alif=False):
 
     n_neurons = 200
     tau = 0.1
@@ -21,6 +21,8 @@ def main(t_len, dims, n_classes, dataset, testset):
 
     # make a model and run it to get spiking data
     train_model = nengo.Network()
+    if alif:
+        train_model.config[nengo.Ensemble].neuron_type = nengo.AdaptiveLIF()
     with train_model:
         feed_net = create_feed_net(dataset[0], dataset[1], t_len, dims, n_classes) 
         normal = nengo.Node(size_in=dims, size_out=dims)
@@ -56,6 +58,8 @@ def main(t_len, dims, n_classes, dataset, testset):
     # set the decoding weights as transforms on a connection
 
     test_model = nengo.Network()
+    if alif:
+        test_model.config[nengo.Ensemble].neuron_type = nengo.AdaptiveLIF()
     with test_model:
         feed_net = create_feed_net(testset[0], testset[1], t_len, dims, n_classes)
         output = nengo.Node(size_in=n_classes, size_out=n_classes)

@@ -19,7 +19,7 @@ def multisynapse(src, dest, sub_features):
         syn, dest.neurons, synapse=None,
         function=lambda x, transform=np.squeeze(dest.encoders): transform*x)
 
-def main(t_len, dims, n_classes, dataset, testset):
+def main(t_len, dims, n_classes, dataset, testset, alif=False):
 
     n_neurons = 200
     tau = 0.1
@@ -38,7 +38,10 @@ def main(t_len, dims, n_classes, dataset, testset):
     with train_model:
         feed_net = create_feed_net(dataset[0], dataset[1], t_len, dims, n_classes)
 
-        state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED)
+        if alif:
+            state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED, neuron_type=nengo.AdaptiveLIF())
+        else:
+            state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED)
 
         nengo.Connection(feed_net.q_in, state.input, synapse=None)
 
@@ -109,7 +112,10 @@ def main(t_len, dims, n_classes, dataset, testset):
     with test_model:
         feed_net = create_feed_net(testset[0], testset[1], t_len, dims, n_classes)
 
-        state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED)
+        if alif:
+            state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED, neuron_type=nengo.AdaptiveLIF())
+        else:
+            state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED)
 
         nengo.Connection(feed_net.q_in, state.input, synapse=None)
 
