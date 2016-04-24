@@ -10,7 +10,7 @@ import ipdb
 import sys
 
 from constants import *
-
+from post import get_accuracy
 
 def main(t_len, dims, n_classes, dataset, testset):
     """Test the vanilla RNN with Lasagne"""
@@ -19,7 +19,7 @@ def main(t_len, dims, n_classes, dataset, testset):
 
     N_BATCH = 1
     GRAD_CLIP = 100
-    N_HIDDEN = 100 # does this make the gradient disappear?
+    N_HIDDEN = 50 # does this make the gradient disappear?
     nonlin = lasagne.nonlinearities.tanh
     w_init = lasagne.init.HeUniform
 
@@ -67,8 +67,6 @@ def main(t_len, dims, n_classes, dataset, testset):
 
     sim = nengo_lasagne.Simulator(net)
 
-    #ipdb.set_trace()
-    # TODO: play with the learning rate to see if you can get it work on little training data
     sim.train({input_node: dataset[0]}, {output_node: dataset[1]},
               #n_epochs=3, minibatch_size=None,
               optimizer=lasagne.updates.adagrad,
@@ -79,7 +77,5 @@ def main(t_len, dims, n_classes, dataset, testset):
     # test the network
     sim.run_steps(testset[0].shape[0])
 
-    output = sim.data[p].squeeze()
-    plt.plot(output)
-    plt.show()
-    ipdb.set_trace()
+    # shape sould be (time, n_classes) and (time, n_classes)
+    return get_accuracy(sim.data[p].squeeze(), testset[1].reshape((-1, n_classes)), t_len)

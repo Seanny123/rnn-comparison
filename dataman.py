@@ -176,16 +176,16 @@ def make_run_args(fi, dims, n_classes, t_steps, ann=False):
 
         zer = np.zeros((int(cls_num*sig_num*dims), pause_size))
         re_zer = dat.reshape((int(cls_num*sig_num*dims), t_steps))
-        dat = np.concatenate((zer, re_zer), axis=1)
+        final_dat = np.concatenate((zer, re_zer), axis=1)
         # TODO: How do you accomplish this with a reshape operation?
         concat_list = []
         for c_i in range(0, n_classes):
-            concat_list.append(dat[c_i*dims:(c_i+1)*dims, :])
-        dat = np.concatenate(concat_list, axis=1).T.reshape(-1, 1, dims)
-        assert np.all(dat[:pause_size,] == 0.0)
+            concat_list.append(final_dat[c_i*dims:(c_i+1)*dims, :])
+        final_dat = np.concatenate(concat_list, axis=1).T.reshape(-1, 1, dims)
+        assert np.all(final_dat[:pause_size,] == 0.0)
 
         cor = make_correct(
-            fi["class_sig_list"],
+            dat,
             n_classes
         )
 
@@ -194,7 +194,7 @@ def make_run_args(fi, dims, n_classes, t_steps, ann=False):
         cor = np.concatenate((zer, re_zer), axis=2).reshape((n_classes, -1))
         cor = cor.T.reshape((-1, 1, n_classes))
         assert np.all(cor[:pause_size,] == 0.0)
-        return (dat, cor)
+        return (final_dat, cor)
     else:
         final_shape = (int(cls_num*sig_num), dims, t_steps)
         return (dat.reshape(final_shape), make_correct(dat, n_classes))
