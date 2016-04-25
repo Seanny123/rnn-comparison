@@ -28,8 +28,9 @@ def main(t_len, dims, n_classes, dataset, testset):
 
     # reshape the input, because the Nengo process outputs a 1 dimensional vector
     # and RNNs can't process that
-    # shape = batch, length, input_size 
-    l_reshape_in = lasagne.layers.ReshapeLayer(l_in, shape=(-1, t_len, dims))
+    # shape = batch, seq_length, input_size
+    # The fact that this isn't working
+    l_reshape_in = lasagne.layers.ReshapeLayer(l_in, shape=(-1, 1, t_len, dims))
 
     # make the recurrent network
     l_rec = lasagne.layers.LSTMLayer(
@@ -52,7 +53,7 @@ def main(t_len, dims, n_classes, dataset, testset):
         input_node = nengo.Node(output=PresentInput(testset[0], dt))
         
         # insert the convolutional network we defined above
-        rnn_layer = nengo_lasagne.layers.LasagneNode(output=l_dense, size_in=dims)
+        rnn_layer = nengo_lasagne.layers.LasagneNode(output=l_dense, size_in=t_len)
 
         # output node
         output_node = nengo.Node(size_in=n_classes)
