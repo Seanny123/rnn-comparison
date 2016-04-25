@@ -3,6 +3,7 @@ import theano
 import theano.tensor as T
 import numpy as np
 import nengo.builder
+import ipdb
 
 import nengo_lasagne
 

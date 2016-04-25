@@ -13,6 +13,8 @@ from nengo.utils.progress import ProgressTracker, TerminalProgressBar
 import nengo_lasagne
 from nengo_lasagne import layers
 
+import ipdb
+
 
 class Model:
     def __init__(self, network):
@@ -130,10 +132,14 @@ class Model:
 
         if optimizer_kwargs is None:
             optimizer_kwargs = {}
+        # so there's something wrong with how this is calculated...
         updates = optimizer(loss, params, **optimizer_kwargs)
-        self.train = theano.function([self.params[x].input.input_var
-                                      for x in train_inputs] + target_vars,
-                                     loss, updates=updates)
+        in_params = [self.params[x].input.input_var for x in train_inputs] + target_vars
+        # params (create a function for these parameters)
+        # outputs (what this computes)
+        # updates (how to calculate the new shared variable values)
+        self.train_func = theano.function(in_params, loss, updates=updates, allow_input_downcast=True)
+        print("Training function compiled!")
         # self.eval = theano.function([self.params[x].input.input_var
         #                              for x in train_inputs], lgn_outputs)
 
@@ -146,13 +152,16 @@ class Model:
             n_inputs = len(list(train_inputs.values())[0])
             minibatch_size = minibatch_size or n_inputs
             for _ in range(n_epochs):
+                # WHAT. WHY THE SHUFFLING.
                 indices = np.arange(n_inputs)
-                np.random.shuffle(indices)
+                #np.random.shuffle(indices)
                 for start in range(0, n_inputs - minibatch_size + 1,
                                    minibatch_size):
                     minibatch = indices[start:start + minibatch_size]
 
-                    self.train(*([train_inputs[x][minibatch]
+                    # pass the training input and target of the node
+                    # into the Theano training function
+                    self.train_func(*([train_inputs[x][minibatch]
                                   for x in train_inputs] +
                                  [train_targets[x][minibatch]
                                   for x in train_targets]))
