@@ -11,15 +11,6 @@ import nengo
 from dataman import *
 import ipdb
 
-
-def make_run_args(fi, dims, t_steps):
-    """reshape before passing (stop organising by class) 
-    and get the correct-ans and pass that too"""
-    dat = fi["class_sig_list"]
-    cls_num = dat.shape[0]
-    sig_num = dat.shape[1]
-    return (dat.reshape((int(cls_num*sig_num), dims, t_steps)), make_correct(dat, dims))
-
 # load a dataset for training
 fi = np.load("datasets/dataset_flatcls_0.5_2_3_0.npz")
 desc = fi["class_desc"].item()
