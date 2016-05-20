@@ -58,6 +58,7 @@ for c_i, cls_type in enumerate(class_type_list):
 
         for e_i in range(exp_iter):
             aug_res = aug(dat, mk_res[1], 1, add_rand_noise, {})
+            # TODO: fix the shuffle
             test_arg = make_run_args(np.array(aug_res), desc["dims"], desc["n_classes"], int(desc["t_len"]/dt), shuffle=True)
 
             test_res = rc_test(*rc_model, testset=test_arg)

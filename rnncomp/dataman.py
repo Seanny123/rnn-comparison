@@ -35,7 +35,7 @@ def ortho_nearest(d):
     p = nengo.dists.UniformHypersphere(surface=True).sample(d, d)
     return np.dot(p, np.linalg.inv(sqrtm(np.dot(p.T, p))))
 
-def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"):
+def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec", save_res=True):
     """given length t_len, dimensions dim, make number of classes given 
     n_classes in terms of a specific signal"""
 
@@ -144,7 +144,9 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
     class_desc["n_classes"] = n_classes
     class_desc["SEED"] = SEED
 
-    np.savez(filename, class_sig_list=class_sig_list, class_desc=class_desc)
+    if save_res:
+        np.savez(filename, class_sig_list=class_sig_list, class_desc=class_desc)
+
     return (np.array(class_sig_list), class_desc)
 
 def make_correct(dataset, n_classes):
@@ -160,7 +162,7 @@ def make_correct(dataset, n_classes):
                             n_classes)
     return correct
 
-def make_run_args(fi, dims, n_classes, t_steps, shuffle=False, ann=False):
+def make_run_args(fi, dims, n_classes, t_steps, ann=False):
     """reshape before passing (stop organising by class) 
     and get the correct-ans and pass that too"""
 
@@ -197,21 +199,11 @@ def make_run_args(fi, dims, n_classes, t_steps, shuffle=False, ann=False):
         cor = cor.T.reshape((-1, 1, n_classes))
         assert np.all(cor[:pause_size,] == 0.0)
 
-        if shuffle:
-            ipdb.set_trace()
-            final_dat, cor = ann_shuffle(final_dat, cor, t_steps, 1)
-
         return (final_dat, cor)
     else:
         final_shape = (int(cls_num*sig_num), dims, t_steps)
         cor = make_correct(dat, n_classes)
         final_dat = dat.reshape(final_shape)
-
-        if shuffle:
-            idx = np.arange(cor.shape[0])
-            np.random.shuffle(idx)
-            cor = cor[idx]
-            final_dat = final_dat[idx]
 
         return (final_dat, cor)
 

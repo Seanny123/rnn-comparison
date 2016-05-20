@@ -102,7 +102,7 @@ def lag(dataset, t_len, lags=3, width=10):
     # no need to rescale
     return dataset.flatten()
 
-def ann_shuffle(dat, cor, t_len, repeats=3):
+def ann_repeat(dat, cor, t_len, repeats=3, rng=np.random.RandomState(SEED)):
     """because online training is weird, shuffle the presentation order
     of the signal, but repeat the dataset"""
     sig_len = int((t_len + PAUSE)/dt)
@@ -114,7 +114,7 @@ def ann_shuffle(dat, cor, t_len, repeats=3):
     final_dat = np.tile(dat, (repeats, 1, 1))
     final_cor = np.tile(cor, (repeats, 1, 1))
     for r_i in xrange(1, repeats):
-        np.random.shuffle(ind)
+        rng.shuffle(ind)
         dat_chunk = final_dat[r_i*rp_len:(r_i+1)*rp_len].reshape((sig_num, sig_len, 1, -1))
         dat_chunk = dat_chunk[ind]
         final_dat[r_i*rp_len:(r_i+1)*rp_len] = dat_chunk.reshape((rp_len, 1, -1))
@@ -125,9 +125,9 @@ def ann_shuffle(dat, cor, t_len, repeats=3):
 
     return (final_dat, final_cor)
 
-def nengo_shuffle(dat, cor):
+def dat_shuffle(dat, cor, rng=np.random.RandomState(SEED)):
     idx = np.arange(cor.shape[0])
-    np.random.shuffle(idx)
+    rng.shuffle(idx)
     cor = cor[idx]
     dat = dat[idx]
     return (dat, cor)
