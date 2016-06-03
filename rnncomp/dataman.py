@@ -162,11 +162,10 @@ def make_correct(dataset, n_classes):
                             n_classes)
     return correct
 
-def make_run_args(fi, dims, n_classes, t_steps, ann=False):
-    """reshape before passing (stop organising by class) 
-    and get the correct-ans and pass that too"""
+def load_dat_file(fi):
+    """stupid hack to let `make_run_args` accept a file
+    or just a dat structure"""
 
-    # stupid hack
     if type(fi) == np.lib.npyio.NpzFile:
         dat = fi["class_sig_list"]
     else:
@@ -174,38 +173,63 @@ def make_run_args(fi, dims, n_classes, t_steps, ann=False):
 
     cls_num = dat.shape[0]
     sig_num = dat.shape[1]
+    dims = dat.shape[2]
+    t_steps = dat.shape[3]
 
-    if ann:
-        pause_size = int(PAUSE/dt)
+    return (dat, cls_num, sig_num, dims, t_steps)
 
-        zer = np.zeros((int(cls_num*sig_num*dims), pause_size))
-        re_zer = dat.reshape((int(cls_num*sig_num*dims), t_steps))
-        final_dat = np.concatenate((zer, re_zer), axis=1)
-        # TODO: How do you accomplish this with a reshape operation?
-        concat_list = []
-        for c_i in range(0, n_classes):
-            concat_list.append(final_dat[c_i*dims:(c_i+1)*dims, :])
-        final_dat = np.concatenate(concat_list, axis=1).T.reshape(-1, 1, dims)
-        assert np.all(final_dat[:pause_size,] == 0.0)
+def make_run_args_nengo(fi):
+    """reshape before passing (stop organising by class) 
+    and get the correct-ans and pass that too
 
-        cor = make_correct(
-            dat,
-            n_classes
-        )
+    the Nengo args need to be defined for each time step and include pauses"""
 
-        zer = np.zeros((n_classes*sig_num, n_classes, pause_size))
-        re_zer = np.repeat(cor, t_steps, axis=1).reshape(n_classes*sig_num, n_classes, t_steps)
-        cor = np.concatenate((zer, re_zer), axis=2).reshape((n_classes, -1))
-        cor = cor.T.reshape((-1, 1, n_classes))
-        assert np.all(cor[:pause_size,] == 0.0)
+    dat, cls_num, sig_num, dims, t_steps = load_dat_file(fi)
 
-        return (final_dat, cor)
-    else:
-        final_shape = (int(cls_num*sig_num), dims, t_steps)
-        cor = make_correct(dat, n_classes)
-        final_dat = dat.reshape(final_shape)
+    pause_size = int(PAUSE/dt)
 
-        return (final_dat, cor)
+    # append zeros to the questions for pauses
+    zer = np.zeros((int(cls_num*sig_num*dims), pause_size))
+    re_zer = dat.reshape((int(cls_num*sig_num*dims), t_steps))
+    final_dat = np.concatenate((zer, re_zer), axis=1)
+    # TODO: How do you accomplish this with a reshape operation?
+    concat_list = []
+    for c_i in range(0, cls_num):
+        concat_list.append(final_dat[c_i*dims:(c_i+1)*dims, :])
+
+    ### WTF. WHAT IS WITH THAT EXTRA DIMENSION. WHY DOES THAT EXIST.
+    final_dat = np.concatenate(concat_list, axis=1).T.reshape(-1, 1, dims)
+    assert np.all(final_dat[:pause_size,] == 0.0)
+
+    # append zeros to the correct answer
+    cor = make_correct(
+        dat,
+        cls_num
+    )
+
+    zer = np.zeros((cls_num*sig_num, cls_num, pause_size))
+    re_zer = np.repeat(cor, t_steps, axis=1).reshape(cls_num*sig_num, cls_num, t_steps)
+    cor = np.concatenate((zer, re_zer), axis=2).reshape((cls_num, -1))
+    ### WTF. WHAT IS WITH THAT EXTRA DIMENSION. WHY DOES THAT EXIST.
+    cor = cor.T.reshape((-1, 1, cls_num))
+    assert np.all(cor[:pause_size,] == 0.0)
+
+    return (final_dat, cor)
+
+def make_run_args_ann(fi):
+    """reshape before passing (stop organising by class) 
+    and get the correct answer and pass that too
+
+    ANN dat args are defined for each time step, but the correct answer is only
+    defined for each question"""
+
+    dat, cls_num, sig_num, dims, t_steps = load_dat_file(fi)
+
+    final_shape = (int(cls_num*sig_num), dims, t_steps)
+    final_dat = dat.reshape(final_shape)
+    cor = make_correct(dat, cls_num)
+
+    return (final_dat, cor)
 
 
 class DataFeed(object):

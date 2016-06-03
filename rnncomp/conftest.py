@@ -1,5 +1,9 @@
+from rnncomp.dataman import *
+#from nengo.conftest import *
+
 import pytest
 
+# TODO: should this just be a helper function?
 @pytest.fixture
 def dat():
     """load the dataset"""

@@ -20,7 +20,7 @@ def aug(dataset, desc, amount, func, kwargs):
         )
 
     # TODO: tell these for-loops to calm the hell down
-    for c_i, cls in enumerate(dataset):
+    for c_i in range(len(dataset)):
         for s_i in xrange(amount):
             for d_i in xrange(desc["dims"]):
                 new_data[c_i][s_i, d_i] = func(dataset[c_i][0][d_i], desc["t_len"], **kwargs)
