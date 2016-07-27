@@ -2,7 +2,7 @@ from rnncomp.dataman import *
 from rnncomp.constants import *
 
 
-# TODO: test multiple sizes of of dat?
+# TODO: test multiple sizes of of dat? signums? so much more coverage...
 
 
 def test_make_correct(dat):
@@ -83,3 +83,6 @@ def test_mk_cls_dataset_flat():
 
     assert mk_res[1] == {'SEED': 0, 'class_type': 'flat',
                          'dims': dims, 'n_classes': n_classes, 't_len': t_len}
+
+def test_datafeed(dat):
+    """run the datafeed and see if it behaves as expected"""

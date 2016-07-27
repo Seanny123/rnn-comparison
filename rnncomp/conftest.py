@@ -1,5 +1,5 @@
 from rnncomp.dataman import *
-#from nengo.conftest import *
+from nengo.conftest import *
 
 import pytest
 

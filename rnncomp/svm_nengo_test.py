@@ -80,6 +80,8 @@ def svm_freq(t_len, dims, n_classes, alif=False):
             sim_train.run((t_len + PAUSE)*dataset[0].shape[0])
         print("training simulation done")
 
+        # TODO: Enable logging and close the files here
+
         # pass the feature data and the target to train an SVM
         print("Training SVM")
 
@@ -158,6 +160,8 @@ def svm_freq(t_len, dims, n_classes, alif=False):
         with sim_test:
             sim_test.run((t_len + PAUSE)*testset[0].shape[0])
         print("test simulation done")
+
+        # TODO: Enable logging and close the files here
 
         return (sim_test.data[p_out], sim_test.data[p_correct])
 

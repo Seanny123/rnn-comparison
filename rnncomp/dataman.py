@@ -259,6 +259,10 @@ class DataFeed(object):
             self.status = open("results/%s" %filename, "w")
             self.f_r = open("results/%s" %filename, "w")
 
+    def close_files(self):
+        self.status.close()
+        self.f_r.close()
+
     def set_answer(self, t, x):
         """just save the answer to a file, like a probe
         saved as [given, correct, paused]

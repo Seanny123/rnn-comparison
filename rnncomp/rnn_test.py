@@ -47,10 +47,7 @@ def vanilla(t_len, dims, n_classes):
         with nengo.Network() as net, nengo_lasagne.default_config():
             # 'insert_weights' is an optional config setting we can use
             # to control whether a connection weight matrix is inserted
-            # for each connection, or whether we just directly connect
-            # the output of the pre to the post. in this case we already
-            # created all the weight matrices we want in the above
-            # Lasagne network.
+            # for each connection
             net.config[nengo.Connection].set_param("insert_weights",
                                                    nengo.params.BoolParam("test", default=False))
 

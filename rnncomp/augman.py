@@ -1,7 +1,7 @@
 # Different augmentation functions
 import nengo
 from nengo.processes import WhiteSignal, WhiteNoise
-from dataman import d3_scale
+from dataman import d3_scale, load_dat_file
 from constants import *
 import numpy as np
 import json
@@ -20,7 +20,7 @@ def aug(dataset, desc, amount, func, kwargs):
         )
 
     # TODO: tell these for-loops to calm the hell down
-    for c_i in range(len(dataset)):
+    for c_i in xrange(len(dataset)):
         for s_i in xrange(amount):
             for d_i in xrange(desc["dims"]):
                 new_data[c_i][s_i, d_i] = func(dataset[c_i][0][d_i], desc["t_len"], **kwargs)
@@ -102,7 +102,7 @@ def lag(dataset, t_len, lags=3, width=10):
     # no need to rescale
     return dataset.flatten()
 
-def ann_repeat(dat, cor, t_len, repeats=3, rng=np.random.RandomState(SEED)):
+def dat_repeat(dat, cor, repeats=3, rng=np.random.RandomState(SEED)):
     """because online training is weird, shuffle the presentation order
     of the signal, but repeat the dataset"""
     sig_len = int((t_len + PAUSE)/dt)
@@ -128,6 +128,5 @@ def ann_repeat(dat, cor, t_len, repeats=3, rng=np.random.RandomState(SEED)):
 def dat_shuffle(dat, cor, rng=np.random.RandomState(SEED)):
     idx = np.arange(cor.shape[0])
     rng.shuffle(idx)
-    cor = cor[idx]
-    dat = dat[idx]
-    return (dat, cor)
+    print(idx)
+    return (dat[idx], cor[idx])
