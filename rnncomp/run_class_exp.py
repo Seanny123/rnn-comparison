@@ -34,7 +34,7 @@ svm_diff = []
 for c_i, cls_type in enumerate(class_type_list):
     for n_classes in class_nums:
         mk_res = mk_cls_dataset(t_len=0.25, dims=1, n_classes=n_classes,
-            freq=freq_list[c_i], class_type=cls_type)
+                                freq=freq_list[c_i], class_type=cls_type)
         desc = mk_res[1]
         dat = np.array(mk_res[0])
         dat_arg = make_run_args(dat, desc["dims"], desc["n_classes"], int(desc["t_len"]/dt))
@@ -54,5 +54,6 @@ for c_i, cls_type in enumerate(class_type_list):
 
 
 filename = "results/class_exp_%s" %(datetime.datetime.now().strftime("%I_%M_%S"))
-np.savez(filename, rc_res={"acc":rc_acc, "diff":rc_diff}, svm_res={"acc":svm_acc, "diff":svm_diff}, class_nums=class_nums, exp_iter=exp_iter)
+np.savez(filename, rc_res={"acc": rc_acc, "diff": rc_diff}, svm_res={"acc": svm_acc, "diff": svm_diff},
+         class_nums=class_nums, exp_iter=exp_iter)
 ipdb.set_trace()

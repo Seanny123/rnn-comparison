@@ -15,10 +15,10 @@ def reservoir(t_len, dims, n_classes, alif=False):
 
     def train(dataset):
 
-        # this makes sure the reccurent weights don't cause the firing rates to explode
+        # this makes sure the recurrent weights don't cause the firing rates to explode
         weights = np.random.uniform(-0.5, 0.5, size=(n_neurons, n_neurons))
         # squaring the weights just increases the gain
-        weights *= 1.0 / np.max(np.abs(np.linalg.eigvals(weights))**2)
+        weights *= 1.0 / np.max(np.linalg.eigvals(weights)**2)
 
         # make a model and run it to get spiking data
         train_model = nengo.Network()
@@ -31,7 +31,7 @@ def reservoir(t_len, dims, n_classes, alif=False):
             state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims,
                                    radius=np.sqrt(dims), seed=SEED)
             nengo.Connection(state.neurons, state.neurons,
-                     transform=weights / n_neurons, synapse=tau, seed=SEED)
+                             transform=weights / n_neurons, synapse=tau, seed=SEED)
 
             nengo.Connection(feed_net.q_in, state, synapse=None)
             nengo.Connection(state, normal)
@@ -52,7 +52,7 @@ def reservoir(t_len, dims, n_classes, alif=False):
         # pass the spiking data and the target to a solver to get decoding weigths
         solver = nengo.solvers.LstsqL2(reg=0.02)
         decoders, _ = solver(sim_train.data[p_spikes], sim_train.data[p_target])
-        return (decoders, weights)
+        return decoders, weights
 
     def test(decoders, weights, testset):
         """run the test data with new decoding weights
@@ -88,6 +88,6 @@ def reservoir(t_len, dims, n_classes, alif=False):
 
         # TODO: Enable logging and close the files here
 
-        return (sim_test.data[p_out], sim_test.data[p_correct])
+        return sim_test.data[p_out], sim_test.data[p_correct]
 
-    return (train, test)
+    return train, test
