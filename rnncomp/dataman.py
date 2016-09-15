@@ -12,8 +12,9 @@ import ipdb
 class_type_list = ["cont_spec", "orth_spec", "disc_spec", "cont_packet",
                    "cont_freq", "cont_amp", "flat"]
 
+
 def d3_scale(dat, out_range=(-1, 1), in_range=None):
-    if in_range == None:
+    if in_range is None:
         domain = [np.min(dat, axis=0), np.max(dat, axis=0)]
     else:
         domain = in_range
@@ -31,9 +32,11 @@ def d3_scale(dat, out_range=(-1, 1), in_range=None):
 
     return interp(uninterp(dat))
 
+
 def ortho_nearest(d):
     p = nengo.dists.UniformHypersphere(surface=True).sample(d, d)
     return np.dot(p, np.linalg.inv(sqrtm(np.dot(p.T, p))))
+
 
 def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec", save_res=True):
     """given length t_len, dimensions dim, make number of classes given 
@@ -77,13 +80,18 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
             elif class_type is "disc_spec":
                 """classify using a specific discrete white-noise
                 based signal"""
-                assert t_len/dt > freq
-                white_size = int(t_len/dt/freq)
-                white_vals = np.random.uniform(low=-1, high=1, size=white_size)
-                white_noise = np.zeros(int(t_len/dt))
-                # TODO: do this without a for-loop by using reshape
-                for w_i in xrange(white_vals.shape[0]):
-                    white_noise[w_i*freq:(w_i+1)*freq] = white_vals[w_i]
+
+                # create the random values to interpolate between
+                assert dt < freq
+                white_vals = np.random.uniform(low=-1, high=1, size=int(t_len * freq))
+
+                # do the interpolation
+                tot_size = int(t_len / dt)
+                step_size = int(tot_size / freq)
+                n_shape = (int(freq), step_size)
+                white_noise = (white_vals[:, None] * np.ones(n_shape)).reshape(tot_size)
+
+                assert white_vals.shape[0] < white_noise.shape[0]
 
                 ex.append(white_noise)
 
@@ -123,7 +131,7 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
                 break
 
             else:
-                raise TypeError("Unknown class data type: %s" %class_type)
+                raise TypeError("Unknown class data type: %s" % class_type)
 
         sig.append(ex)
         sig = np.array(sig)
@@ -137,7 +145,7 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
     # write and return
     assert len(class_sig_list) == n_classes
 
-    filename = "./datasets/dataset_%scls_%s_%s_%s_%s" %(class_type, t_len, dims, n_classes, SEED)
+    filename = "./datasets/dataset_%scls_%s_%s_%s_%s" % (class_type, t_len, dims, n_classes, SEED)
     class_desc["class_type"] = class_type
     class_desc["t_len"] = t_len
     class_desc["dims"] = dims
@@ -147,7 +155,8 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
     if save_res:
         np.savez(filename, class_sig_list=class_sig_list, class_desc=class_desc)
 
-    return (np.array(class_sig_list), class_desc)
+    return np.array(class_sig_list), class_desc
+
 
 def make_correct(dataset, n_classes):
     """ make a giant array of correct answers """
@@ -161,6 +170,7 @@ def make_correct(dataset, n_classes):
     assert correct.shape == (dataset.shape[0]*dataset.shape[1],
                             n_classes)
     return correct
+
 
 def load_dat_file(fi):
     """stupid hack to let `make_run_args` accept a file
@@ -176,7 +186,8 @@ def load_dat_file(fi):
     dims = dat.shape[2]
     t_steps = dat.shape[3]
 
-    return (dat, cls_num, sig_num, dims, t_steps)
+    return dat, cls_num, sig_num, dims, t_steps
+
 
 def make_run_args_nengo(fi):
     """reshape before passing (stop organising by class) 
@@ -214,7 +225,8 @@ def make_run_args_nengo(fi):
     cor = cor.T.reshape((-1, 1, cls_num))
     assert np.all(cor[:pause_size,] == 0.0)
 
-    return (final_dat, cor)
+    return final_dat, cor
+
 
 def make_run_args_ann(fi):
     """reshape before passing (stop organising by class) 
@@ -229,14 +241,13 @@ def make_run_args_ann(fi):
     final_dat = dat.reshape(final_shape)
     cor = make_correct(dat, cls_num)
 
-    return (final_dat, cor)
+    return final_dat, cor
 
 
 class DataFeed(object):
 
     def __init__(self, dataset, correct, t_len, dims, n_classes, filename="derp", log=False):
         self.data_index = 0
-
 
         self.time = 0.0
         self.sig_time = 0
@@ -256,8 +267,8 @@ class DataFeed(object):
         self.log = log
 
         if log:
-            self.status = open("results/%s" %filename, "w")
-            self.f_r = open("results/%s" %filename, "w")
+            self.status = open("results/%s" % filename, "w")
+            self.f_r = open("results/%s" % filename, "w")
 
     def close_files(self):
         self.status.close()
@@ -280,7 +291,6 @@ class DataFeed(object):
             return self.correct[self.indices[self.data_index]]
         else:
             return np.zeros(self.n_classes)
-
 
     def feed(self, t):
         """feed the answer into the network
