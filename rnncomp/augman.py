@@ -1,7 +1,6 @@
 # Different augmentation functions
-import nengo
 from nengo.processes import WhiteSignal, WhiteNoise
-from dataman import d3_scale, load_dat_file
+from dataman import d3_scale
 from constants import *
 import numpy as np
 import json
@@ -10,8 +9,11 @@ import matplotlib.pyplot as plt
 import ipdb
 
 
+# TODO: get rid of the amount argument
 def aug(dataset, desc, amount, func, kwargs):
-    """iterate through each class, augment it and save the result"""
+    """iterate through each class, augment it and save the result.
+
+    The `amount` argument is to note the number of examples, but it isnt' always used properly"""
     new_data = []
 
     for _ in range(desc["n_classes"]):
@@ -23,7 +25,7 @@ def aug(dataset, desc, amount, func, kwargs):
     for c_i in xrange(len(dataset)):
         for s_i in xrange(amount):
             for d_i in xrange(desc["dims"]):
-                new_data[c_i][s_i, d_i] = func(dataset[c_i][0][d_i], desc["t_len"], **kwargs)
+                new_data[c_i][s_i, d_i] = func(dataset[c_i][s_i][d_i], desc["t_len"], **kwargs)
 
     filename = "../datasets/dataset_%scls_%s_%s_%s_%s_aug_%s" %(
         desc["class_type"],
@@ -47,6 +49,7 @@ def aug(dataset, desc, amount, func, kwargs):
 
     return new_data
 
+
 # TODO: try gaussian and uniform
 def add_rand_noise(dataset, t_len, freq=10, scale=0.2, sig=True):
     """additive noise"""
@@ -56,10 +59,12 @@ def add_rand_noise(dataset, t_len, freq=10, scale=0.2, sig=True):
         noise = WhiteNoise().run(t_len)[:, 0] * scale
     return dataset + noise
 
+
 def conv_rand_noise(dataset, t_len, freq=500, scale=0.001):
-    """convolve with noise"""
+    """convolve with noise, which heavily distorts the signal almost beyond all recognition"""
     noise = WhiteSignal(t_len, freq).run(t_len)[:, 0] * scale
     return d3_scale(np.convolve(dataset, noise, mode="same"))
+
 
 def shot_noise(dataset, t_len, shots=3, width=2):
     """randomly add impulses in either direction"""
@@ -70,37 +75,48 @@ def shot_noise(dataset, t_len, shots=3, width=2):
     shot_vals = np.random.choice([-1, 1], size=(shots, 1))
 
     # reshape into widths, index to add then flatten again
-    #ipdb.set_trace()
-    dataset.reshape((-1, width))[shot_ind, :] += shot_vals
+    ret_val = np.copy(dataset)
+    ret_val.reshape((-1, width))[shot_ind, :] += shot_vals
     # no need to rescale
-    return dataset.flatten()
+    return ret_val.flatten()
 
 """
  filtering a signal doesn't need to be a function, because we have no
  idea what we're going to be filtering with, other than a LowPass for lolz
 """
 
+
 def offset(dataset, scale=0.1):
     """shift and normalize"""
-    return d3_scale(dataset + scale)
+    if scale > 0.1:
+        out_range = (np.min(dataset), np.max(dataset+scale))
+    else:
+        out_range = (np.min(dataset+scale), np.max(dataset))
+
+    return d3_scale(dataset + scale, out_range=out_range)
 
 
 def make_more(dataset):
     # won't work for '_spec' signals
     raise NotImplementedError("Nope")
 
+
 def lag(dataset, t_len, lags=3, width=10):
     """add a random temporal lag"""
+
+    raise NotImplementedError("Nope")
     t_len = t_len/dt
     assert lags*width < t_len
     assert t_len % width == 0
     lag_ind = np.random.choice(int(t_len/width), replace=False, size=lags)
+    ret_val = np.copy(dataset)
 
     # reshape into widths, index to add then flatten again
-    lag_vals = dataset.reshape((-1, width))[lag_ind, 0]
-    dataset.reshape((-1, width))[lag_ind, :] = (np.ones((width, lags)) * lag_vals).T
+    lag_vals = ret_val.reshape((-1, width))[lag_ind, 0]
+    ret_val.reshape((-1, width))[lag_ind, :] = (np.ones((width, lags)) * lag_vals).T
     # no need to rescale
-    return dataset.flatten()
+    return ret_val.flatten()
+
 
 def dat_repeat(dat, cor, repeats=3, rng=np.random.RandomState(SEED)):
     """because online training is weird, shuffle the presentation order
@@ -124,6 +140,7 @@ def dat_repeat(dat, cor, repeats=3, rng=np.random.RandomState(SEED)):
         final_cor[r_i*rp_len:(r_i+1)*rp_len] = cor_chunk.reshape((rp_len, 1, -1))
 
     return (final_dat, final_cor)
+
 
 def dat_shuffle(dat, cor, rng=np.random.RandomState(SEED)):
     idx = np.arange(cor.shape[0])
