@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from dataman import *
 from post import *
 
+
 def reservoir(t_len, dims, n_classes, alif=False):
     n_neurons = 200
     tau = 0.1
@@ -18,7 +19,7 @@ def reservoir(t_len, dims, n_classes, alif=False):
         # this makes sure the recurrent weights don't cause the firing rates to explode
         weights = np.random.uniform(-0.5, 0.5, size=(n_neurons, n_neurons))
         # squaring the weights just increases the gain
-        weights *= 1.0 / np.max(np.linalg.eigvals(weights)**2)
+        weights *= 1.0 / np.max(np.abs(np.linalg.eigvals(weights))**2)
 
         # make a model and run it to get spiking data
         train_model = nengo.Network()

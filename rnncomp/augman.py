@@ -126,7 +126,7 @@ def dat_repeat(dat, cor, repeats=3, rng=np.random.RandomState(SEED)):
     rp_len = dat.shape[0]
     ind = np.arange(sig_num)
 
-    # this repition needs to be reshaped after repeating, maybe should use tile instead?
+    # this repetition needs to be reshaped after repeating, maybe should use tile instead?
     final_dat = np.tile(dat, (repeats, 1, 1))
     final_cor = np.tile(cor, (repeats, 1, 1))
     for r_i in xrange(1, repeats):
@@ -139,11 +139,10 @@ def dat_repeat(dat, cor, repeats=3, rng=np.random.RandomState(SEED)):
         cor_chunk = cor_chunk[ind]
         final_cor[r_i*rp_len:(r_i+1)*rp_len] = cor_chunk.reshape((rp_len, 1, -1))
 
-    return (final_dat, final_cor)
+    return final_dat, final_cor
 
 
 def dat_shuffle(dat, cor, rng=np.random.RandomState(SEED)):
     idx = np.arange(cor.shape[0])
     rng.shuffle(idx)
-    print(idx)
-    return (dat[idx], cor[idx])
+    return dat[idx], cor[idx]

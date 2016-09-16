@@ -49,7 +49,8 @@ def get_accuracy(ans, ground, t_len=0.5, sample_every=0.001):
 
     acc = np.where(ans_diff > 0)[0].shape[0] / float(sig_num)
 
-    return (acc, ans_diff, ground_diff)
+    return acc, ans_diff, ground_diff
+
 
 def get_conf(ans, ground, t_len=0.5, sample_every=0.001):
     """get "confidence" and "confusion" over time for each signal
@@ -85,8 +86,7 @@ def get_conf(ans, ground, t_len=0.5, sample_every=0.001):
         # get how much the final answer deviates
         confidence[a_i] = tmp_ans[max_idx[0]]
 
-
         # get how distinct the final answer is from the second best answer
         confusion[a_i] = tmp_ans[max_idx[0]] - tmp_ans[max_idx[1]]
 
-    return {"confidence":confidence, "confusion":confusion}
+    return {"confidence": confidence, "confusion": confusion}

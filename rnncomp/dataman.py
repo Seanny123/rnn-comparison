@@ -27,7 +27,7 @@ def d3_scale(dat, out_range=(-1, 1), in_range=None):
         if (domain[1] - domain[0]) != 0:
             b = domain[1] - domain[0]
         else:
-            b =  1.0 / domain[1]
+            b = 1.0 / domain[1]
         return (x - domain[0]) / b
 
     return interp(uninterp(dat))
@@ -83,12 +83,14 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
 
                 # create the random values to interpolate between
                 assert dt < freq
-                white_vals = np.random.uniform(low=-1, high=1, size=int(t_len * freq))
+                white_size = int(t_len * freq)
+                white_vals = np.random.uniform(low=-1, high=1, size=white_size)
 
                 # do the interpolation
                 tot_size = int(t_len / dt)
-                step_size = int(tot_size / freq)
-                n_shape = (int(freq), step_size)
+                step_size = int(1.0 / freq / dt)
+                n_shape = (white_size, step_size)
+                print(n_shape)
                 white_noise = (white_vals[:, None] * np.ones(n_shape)).reshape(tot_size)
 
                 assert white_vals.shape[0] < white_noise.shape[0]
@@ -200,11 +202,13 @@ def make_run_args_nengo(fi):
     pause_size = int(PAUSE/dt)
 
     # append zeros to the questions for pauses
-    zer = np.zeros((int(cls_num*sig_num*dims), pause_size))
-    re_zer = dat.reshape((int(cls_num*sig_num*dims), t_steps))
+    tot_sigs = int(cls_num*sig_num*dims)
+    zer = np.zeros((tot_sigs, pause_size))
+    re_zer = dat.reshape((tot_sigs, t_steps))
     final_dat = np.concatenate((zer, re_zer), axis=1)
     # TODO: How do you accomplish this with a reshape operation?
     concat_list = []
+    ipdb.set_trace()
     for c_i in range(0, cls_num):
         concat_list.append(final_dat[c_i*dims:(c_i+1)*dims, :])
 
@@ -287,7 +291,7 @@ class DataFeed(object):
 
     def get_answer(self, t):
         """signal for correct answer, maybe should be added as a dimension to feed?"""
-        if self.time > self.pause_time and self.time < self.q_duration:
+        if self.pause_time < self.time < self.q_duration:
             return self.correct[self.indices[self.data_index]]
         else:
             return np.zeros(self.n_classes)
@@ -317,6 +321,7 @@ class DataFeed(object):
             self.paused = False
 
             q_num = int(self.sig_time - self.pause_time/dt)
+            ipdb.set_trace()
             return_val = self.qs[self.indices[self.data_index]][:, q_num]
             self.sig_time += 1
             return return_val
