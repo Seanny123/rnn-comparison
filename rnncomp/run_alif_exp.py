@@ -1,4 +1,4 @@
-# for each dataset try using ALIF neurons and checkif there's a performance
+# for each dataset try using ALIF neurons and check if there's a performance
 # boost
 # TODO: maybe abstract this to a general experiment function?
 

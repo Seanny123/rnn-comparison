@@ -9,6 +9,7 @@ from constants import *
 from dataman import *
 from post import *
 
+
 def multisynapse(src, dest, sub_features):
 
     synapses = [Bandpass(freq, Q) for (freq, Q) in sub_features]
@@ -18,6 +19,7 @@ def multisynapse(src, dest, sub_features):
     nengo.Connection(
         syn, dest.neurons, synapse=None,
         function=lambda x, transform=np.squeeze(dest.encoders): transform*x)
+
 
 def svm_freq(t_len, dims, n_classes, alif=False):
 
@@ -46,7 +48,6 @@ def svm_freq(t_len, dims, n_classes, alif=False):
                 state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED)
 
             nengo.Connection(feed_net.q_in, state.input, synapse=None)
-
 
             for dim in range(dims):
                 # this declaration needed for the multisynapse transform
@@ -101,15 +102,14 @@ def svm_freq(t_len, dims, n_classes, alif=False):
             xv[:, p_i*400:(p_i+1)*400] = sim_train.data[p_feat]
 
         clf = svm.LinearSVC().fit(xv, yv)
-        # Need to use clf.classes_, clf.coef_, clf.intercept_
+        # Need to use clf.coef_, clf.intercept_
 
         # this basically just forms the coefficients into weights, it's basically a reshape operation
         weights = np.zeros((len(feat_list), features_per_dim, n_classes))
         for i in xrange(feature_num):
-            weights[
-                i // features_per_dim, i % features_per_dim] = clf.coef_[:, i]
+            weights[i // features_per_dim, i % features_per_dim] = clf.coef_[:, i]
 
-        return (weights, clf.intercept_)
+        return weights, clf.intercept_
 
     def test(weights, intercept, testset=None):
         # run the test data with the SVM
@@ -134,23 +134,21 @@ def svm_freq(t_len, dims, n_classes, alif=False):
             predict = nengo.networks.EnsembleArray(n_neurons, n_classes, seed=SEED+1)
 
             nengo.Connection(scores, predict.input, transform=tau_ratio,
-                synapse=predict_tau)
+                             synapse=predict_tau)
             nengo.Connection(predict.input, predict.output,
-                transform=1-tau_ratio, synapse=predict_tau)
+                             transform=1-tau_ratio, synapse=predict_tau)
 
             for dim in range(dims):
-                w = weights[dim]
-
                 feat_pop = nengo.Ensemble(features_per_dim, 1, encoders=enc_list[dim],
-                    seed=SEED+dim)
+                                          seed=SEED+dim)
                 multisynapse(state.ensembles[dim], feat_pop, feat_list[dim])
 
                 nengo.Connection(feat_pop.neurons, scores,
-                    transform=w.T, synapse=None)
+                                 transform=weights[dim].T, synapse=None)
 
             bias = nengo.Node(output=[1], label="bias")
             nengo.Connection(bias, scores,
-                     transform=intercept[:, None], synapse=None)
+                             transform=intercept[:, None], synapse=None)
 
             p_out = nengo.Probe(predict.output)
             p_correct = nengo.Probe(feed_net.get_ans)
@@ -163,6 +161,6 @@ def svm_freq(t_len, dims, n_classes, alif=False):
 
         # TODO: Enable logging and close the files here
 
-        return (sim_test.data[p_out], sim_test.data[p_correct])
+        return sim_test.data[p_out], sim_test.data[p_correct]
 
-    return (train, test)
+    return train, test
