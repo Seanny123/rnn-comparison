@@ -90,7 +90,6 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
                 tot_size = int(t_len / dt)
                 step_size = int(1.0 / freq / dt)
                 n_shape = (white_size, step_size)
-                print(n_shape)
                 white_noise = (white_vals[:, None] * np.ones(n_shape)).reshape(tot_size)
 
                 assert white_vals.shape[0] < white_noise.shape[0]
@@ -161,22 +160,27 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
 
 
 def make_correct(dataset, n_classes):
-    """ make a giant array of correct answers """
-    # TODO: use integers to save memory?
+    """make a giant array of correct answers"""
     correct = []
-    for c_i in range(dataset.shape[0]):
-        cor = np.zeros((dataset.shape[1], n_classes))
+    cls_num = dataset.shape[0]
+    sig_num = dataset.shape[1]
+
+    for c_i in range(cls_num):
+        cor = np.zeros((sig_num, n_classes), dtype=np.int8)
         cor[:, c_i] = 1
         correct.extend(cor)
-    correct = np.array(correct)
-    assert correct.shape == (dataset.shape[0]*dataset.shape[1],
-                            n_classes)
+    correct = np.array(correct, dtype=np.int8)
+
+    assert correct.shape == (cls_num*sig_num, n_classes)
+
     return correct
 
 
 def load_dat_file(fi):
     """stupid hack to let `make_run_args` accept a file
-    or just a dat structure"""
+    or just a dat structure
+
+    output format = [signal_class, examples, dimensions, time_steps]"""
 
     if type(fi) == np.lib.npyio.NpzFile:
         dat = fi["class_sig_list"]
@@ -192,58 +196,53 @@ def load_dat_file(fi):
 
 
 def make_run_args_nengo(fi):
-    """reshape before passing (stop organising by class) 
-    and get the correct-ans and pass that too
+    """stop organising by class and get the correct answer
+    while including pauses to let the networks reset
 
-    the Nengo args need to be defined for each time step and include pauses"""
+    output format = [signal_index, dimensions, time_steps]
+    output_format for cor = [signal_index, n_classes]"""
 
     dat, cls_num, sig_num, dims, t_steps = load_dat_file(fi)
 
     pause_size = int(PAUSE/dt)
 
     # append zeros to the questions for pauses
-    tot_sigs = int(cls_num*sig_num*dims)
-    zer = np.zeros((tot_sigs, pause_size))
-    re_zer = dat.reshape((tot_sigs, t_steps))
-    final_dat = np.concatenate((zer, re_zer), axis=1)
-    # TODO: How do you accomplish this with a reshape operation?
-    concat_list = []
-    ipdb.set_trace()
-    for c_i in range(0, cls_num):
-        concat_list.append(final_dat[c_i*dims:(c_i+1)*dims, :])
+    tot_sigs = int(cls_num*sig_num)
+    zer = np.zeros((tot_sigs, dims, pause_size))
+    re_zer = dat.reshape((tot_sigs, dims, t_steps))
+    final_dat = np.concatenate((zer, re_zer), axis=2)
 
-    ### WTF. WHAT IS WITH THAT EXTRA DIMENSION. WHY DOES THAT EXIST.
-    final_dat = np.concatenate(concat_list, axis=1).T.reshape(-1, 1, dims)
-    assert np.all(final_dat[:pause_size,] == 0.0)
+    zer_shape = (cls_num, dims, pause_size)
+    assert np.all(np.zeros(zer_shape) == final_dat[:, :dims, :pause_size])
 
-    # append zeros to the correct answer
-    cor = make_correct(
-        dat,
-        cls_num
-    )
-
-    zer = np.zeros((cls_num*sig_num, cls_num, pause_size))
-    re_zer = np.repeat(cor, t_steps, axis=1).reshape(cls_num*sig_num, cls_num, t_steps)
-    cor = np.concatenate((zer, re_zer), axis=2).reshape((cls_num, -1))
-    ### WTF. WHAT IS WITH THAT EXTRA DIMENSION. WHY DOES THAT EXIST.
-    cor = cor.T.reshape((-1, 1, cls_num))
-    assert np.all(cor[:pause_size,] == 0.0)
+    # get the correct answer
+    cor = make_correct(dat, cls_num)
 
     return final_dat, cor
 
 
-def make_run_args_ann(fi):
-    """reshape before passing (stop organising by class) 
-    and get the correct answer and pass that too
+def make_run_args_ann(nengo_dat, nengo_cor):
+    """change Nengo inputs to the Lasagne input
 
-    ANN dat args are defined for each time step, but the correct answer is only
-    defined for each question"""
+    output format for dat = [time_steps, 1, dimensions]
+    output format for cor = [time_steps, 1, signal_index]"""
 
-    dat, cls_num, sig_num, dims, t_steps = load_dat_file(fi)
+    dims = nengo_dat.shape[1]
+    t_with_pause = nengo_dat.shape[2]
 
-    final_shape = (int(cls_num*sig_num), dims, t_steps)
-    final_dat = dat.reshape(final_shape)
-    cor = make_correct(dat, cls_num)
+    dim_last = nengo_dat.reshape((-1, t_with_pause, dims))
+    final_dat = dim_last.reshape((-1, 1, dims))
+
+    pause_size = int(PAUSE/dt)
+    n_classes = nengo_cor.shape[0]
+    tot_sigs = nengo_cor.shape[1]
+    t_steps = t_with_pause - pause_size
+
+    zer = np.zeros((tot_sigs, n_classes, pause_size), dtype=np.int8)
+    re_zer = np.repeat(nengo_cor, t_steps, axis=1).reshape((tot_sigs, n_classes, t_steps))
+    cor_with_pause = np.concatenate((zer, re_zer), axis=2)
+    # put the time-steps last, with dims first and then transpose
+    cor = cor_with_pause.reshape((n_classes, 1, -1)).T
 
     return final_dat, cor
 
@@ -321,7 +320,6 @@ class DataFeed(object):
             self.paused = False
 
             q_num = int(self.sig_time - self.pause_time/dt)
-            ipdb.set_trace()
             return_val = self.qs[self.indices[self.data_index]][:, q_num]
             self.sig_time += 1
             return return_val
