@@ -60,6 +60,8 @@ def get_conf(ans, ground, t_len=0.5, sample_every=0.001):
     "confidence" is how much the final answer deviates
 
     Note: we can cross-reference this with correct answers later
+
+    WTF. This function doesn't use `ground` so there's no way this working.
     """
 
     t_len = t_len/dt

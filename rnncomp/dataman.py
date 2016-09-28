@@ -221,29 +221,28 @@ def make_run_args_nengo(fi):
     return final_dat, cor
 
 
-def make_run_args_ann(nengo_dat, nengo_cor):
+def make_run_args_ann(n_dat, n_cor):
     """change Nengo inputs to the Lasagne input
 
-    output format for dat = [time_steps, 1, dimensions]
-    output format for cor = [time_steps, 1, signal_index]"""
+    output format for dat = [time_steps, dimensions]
+    output format for cor = [time_steps, 1, n_classes]"""
 
-    dims = nengo_dat.shape[1]
-    t_with_pause = nengo_dat.shape[2]
+    dims = n_dat.shape[1]
+    t_with_pause = n_dat.shape[2]
 
-    dim_last = nengo_dat.reshape((-1, t_with_pause, dims))
+    dim_last = n_dat.reshape((-1, t_with_pause, dims))
     final_dat = dim_last.reshape((-1, 1, dims))
 
     pause_size = int(PAUSE/dt)
-    n_classes = nengo_cor.shape[0]
-    tot_sigs = nengo_cor.shape[1]
+    n_classes = n_cor.shape[0]
+    tot_sigs = n_cor.shape[1]
     t_steps = t_with_pause - pause_size
 
     zer = np.zeros((tot_sigs, n_classes, pause_size), dtype=np.int8)
-    re_zer = np.repeat(nengo_cor, t_steps, axis=1).reshape((tot_sigs, n_classes, t_steps))
+    re_zer = np.repeat(n_cor, t_steps, axis=1).reshape((tot_sigs, n_classes, t_steps))
     cor_with_pause = np.concatenate((zer, re_zer), axis=2)
     # put the time-steps last, with dims first and then transpose
     cor = cor_with_pause.reshape((n_classes, 1, -1)).T
-
     return final_dat, cor
 
 

@@ -34,13 +34,13 @@ def svm_freq(t_len, dims, n_classes, alif=False):
     enc_list = []
     sample_every = 0.005
 
-    def train(dataset):
+    def train(dataset, corset):
 
         # make a model and run it to get spiking data
         # as acquired when passed through multiple bandpass filters
         train_model = nengo.Network()
         with train_model:
-            feed_net = create_feed_net(dataset[0], dataset[1], t_len, dims, n_classes)
+            feed_net = create_feed_net(dataset, corset, t_len, dims, n_classes)
 
             if alif:
                 state = nengo.networks.EnsembleArray(n_neurons, dims, seed=SEED, neuron_type=nengo.AdaptiveLIF())
@@ -78,7 +78,7 @@ def svm_freq(t_len, dims, n_classes, alif=False):
         print("training simulation start")
         sim_train = nengo.Simulator(train_model)
         with sim_train:
-            sim_train.run((t_len + PAUSE)*dataset[0].shape[0])
+            sim_train.run((t_len + PAUSE)*dataset.shape[0])
         print("training simulation done")
 
         # TODO: Enable logging and close the files here

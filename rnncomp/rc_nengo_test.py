@@ -14,7 +14,7 @@ def reservoir(t_len, dims, n_classes, alif=False):
     n_neurons = 200
     tau = 0.1
 
-    def train(dataset):
+    def train(dataset, corset):
 
         # this makes sure the recurrent weights don't cause the firing rates to explode
         weights = np.random.uniform(-0.5, 0.5, size=(n_neurons, n_neurons))
@@ -26,7 +26,7 @@ def reservoir(t_len, dims, n_classes, alif=False):
         if alif:
             train_model.config[nengo.Ensemble].neuron_type = nengo.AdaptiveLIF()
         with train_model:
-            feed_net = create_feed_net(dataset[0], dataset[1], t_len, dims, n_classes) 
+            feed_net = create_feed_net(dataset, corset, t_len, dims, n_classes)
             normal = nengo.Node(size_in=dims, size_out=dims)
 
             state = nengo.Ensemble(n_neurons=n_neurons, dimensions=dims,
@@ -45,7 +45,7 @@ def reservoir(t_len, dims, n_classes, alif=False):
         print("training simulation start")
         sim_train = nengo.Simulator(train_model)
         with sim_train:
-            sim_train.run((t_len + PAUSE)*dataset[0].shape[0])
+            sim_train.run((t_len + PAUSE)*dataset.shape[0])
         print("training simulation done")
 
         # TODO: Enable logging and close the files here

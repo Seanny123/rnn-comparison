@@ -22,8 +22,7 @@ van_train, van_test = rnn_test.vanilla(desc["t_len"], desc["dims"], desc["n_clas
 van_sim, p_out = van_train(ann_dat, ann_cor)
 res = van_test(van_sim, test_dat, p_out)
 
-
-filename = "../results/basic_exp_%s" %(datetime.datetime.now().strftime("%I_%M_%S"))
+filename = "../results/basic_ann_exp_%s" %(datetime.datetime.now().strftime("%I_%M_%S"))
 np.savez(filename, van_res={"pred": res, "cor": test_cor})
 
 ipdb.set_trace()

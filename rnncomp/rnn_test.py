@@ -36,8 +36,8 @@ def vanilla(t_len, dims, n_classes):
         l_rec = lasagne.layers.RecurrentLayer(
             l_reshape_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
             W_in_to_hid=w_init(),
-            W_hid_to_hid=w_init(), # TODO: change the weight init to the identity matrix
-            nonlinearity=nonlin)#, only_return_final=True)
+            W_hid_to_hid=w_init(),
+            nonlinearity=nonlin)
 
         l_dense = lasagne.layers.DenseLayer(l_rec, num_units=n_classes, nonlinearity=lasagne.nonlinearities.softmax)
 
@@ -53,7 +53,7 @@ def vanilla(t_len, dims, n_classes):
             input_node = nengo.Node(output=PresentInput(datset, dt))
             
             # insert the recurrent network we defined above
-            rnn_layer = nengo_lasagne.layers.LasagneNode(output=l_dense, size_in=int(dims*t_len/dt))
+            rnn_layer = nengo_lasagne.layers.LasagneNode(output=l_dense, size_in=dims)
 
             # output node
             output_node = nengo.Node(size_in=n_classes)
@@ -75,7 +75,7 @@ def vanilla(t_len, dims, n_classes):
 
     def test(sim, testset, p_out):
         # test the network
-        sim.run_steps(testset[0].shape[0])
+        sim.run_steps(testset.shape[0])
 
         # shape should be (time, n_classes) and (time, n_classes)
         #return get_accuracy(sim.data[p_out].squeeze(), testset[1].reshape((-1, n_classes)), t_len)
