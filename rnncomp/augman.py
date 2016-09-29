@@ -13,7 +13,7 @@ import ipdb
 def aug(dataset, desc, amount, func, kwargs):
     """iterate through each class, augment it and save the result.
 
-    The `amount` argument is to note the number of examples, but it isnt' always used properly"""
+    The `amount` argument is to note the number of examples, but it isn't always used properly"""
     new_data = []
 
     for _ in range(desc["n_classes"]):
@@ -50,7 +50,6 @@ def aug(dataset, desc, amount, func, kwargs):
     return new_data
 
 
-# TODO: try gaussian and uniform
 def add_rand_noise(dataset, t_len, freq=10, scale=0.2, sig=True):
     """additive noise"""
     if sig:

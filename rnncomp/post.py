@@ -26,7 +26,6 @@ def get_res_info(info_func, info_res, ans, ground, t_len=0.5, sample_every=0.001
         end = int(s_i * (pause_len + ans_len))
 
         # get attempted answers
-        print("start:%s, end:%s" % (start, end,))
         tmp_ans = ans[start:end]
         sum_ans = np.sum(tmp_ans, axis=0)
         max_idx = sum_ans.argsort()[-2:][::-1]
@@ -60,7 +59,7 @@ def get_diff(ans, max_idx, res, grnd_idx):
     # get distance of correct answer from ideal
     g_diff = ans.shape[0] - np.sum(ans[:, grnd_idx])
     res['gd_mean'].append(np.mean(g_diff))
-    res['gd_std'].append(np.mean(g_diff))
+    res['gd_std'].append(np.std(g_diff))
 
 
 def get_acc(ans_diff, sig_num):

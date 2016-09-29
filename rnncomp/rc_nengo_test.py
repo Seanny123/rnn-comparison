@@ -37,10 +37,8 @@ def reservoir(t_len, dims, n_classes, alif=False):
             nengo.Connection(feed_net.q_in, state, synapse=None)
             nengo.Connection(state, normal)
 
-            p_sig = nengo.Probe(feed_net.q_in, synapse=None)
             p_target = nengo.Probe(feed_net.get_ans, synapse=None)
             p_spikes = nengo.Probe(state.neurons, synapse=tau)
-            p_normal = nengo.Probe(normal, synapse=tau)
 
         print("training simulation start")
         sim_train = nengo.Simulator(train_model)
@@ -79,7 +77,6 @@ def reservoir(t_len, dims, n_classes, alif=False):
 
             p_out = nengo.Probe(output)
             p_correct = nengo.Probe(feed_net.get_ans)
-            p_test_sig = nengo.Probe(feed_net.q_in, synapse=None)
 
         print("test simulation start")
         sim_test = nengo.Simulator(test_model)
@@ -87,7 +84,6 @@ def reservoir(t_len, dims, n_classes, alif=False):
             sim_test.run((t_len + PAUSE)*testset[0].shape[0])
         print("test simulation done")
 
-        # TODO: Enable logging and close the files here
 
         return sim_test.data[p_out], sim_test.data[p_correct]
 

@@ -23,7 +23,6 @@ def multisynapse(src, dest, sub_features):
 
 def svm_freq(t_len, dims, n_classes, alif=False):
 
-    n_neurons = 200
     tau = 0.1
     # setup the feature craziness
     freq_range = (0, 500)
@@ -32,7 +31,6 @@ def svm_freq(t_len, dims, n_classes, alif=False):
     feat_pops = []
     feat_list = []
     enc_list = []
-    sample_every = 0.005
 
     def train(dataset, corset):
 

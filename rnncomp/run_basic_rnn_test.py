@@ -18,7 +18,7 @@ ann_dat, ann_cor = make_run_args_ann(nengo_dat, nengo_cor)
 shuf_dat = dat_shuffle(nengo_dat, nengo_cor)
 test_dat, test_cor = make_run_args_ann(*shuf_dat)
 
-van_train, van_test = rnn_test.vanilla(desc["t_len"], desc["dims"], desc["n_classes"])
+van_train, van_test = rnn_test.vanilla(desc["dims"], desc["n_classes"])
 van_sim, p_out = van_train(ann_dat, ann_cor)
 res = van_test(van_sim, test_dat, p_out)
 
