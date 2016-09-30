@@ -1,17 +1,13 @@
 # based off https://github.com/tcstewar/testing_notebooks/blob/master/Reservoir.ipynb
 
+from constants import *
+from dataman import create_feed_net
+
 import nengo
 import numpy as np
 
-import ipdb
-import matplotlib.pyplot as plt
-
-from dataman import *
-from post import *
-
 
 def reservoir(t_len, dims, n_classes, alif=False):
-    n_neurons = 200
     tau = 0.1
 
     def train(dataset, corset):
@@ -75,15 +71,14 @@ def reservoir(t_len, dims, n_classes, alif=False):
             nengo.Connection(output, feed_net.set_ans, synapse=None)
             nengo.Connection(state, normal)
 
-            p_out = nengo.Probe(output)
-            p_correct = nengo.Probe(feed_net.get_ans)
+            p_out = nengo.Probe(output, sample_every=sample_every)
+            p_correct = nengo.Probe(feed_net.get_ans, sample_every=sample_every)
 
         print("test simulation start")
         sim_test = nengo.Simulator(test_model)
         with sim_test:
             sim_test.run((t_len + PAUSE)*testset[0].shape[0])
         print("test simulation done")
-
 
         return sim_test.data[p_out], sim_test.data[p_correct]
 

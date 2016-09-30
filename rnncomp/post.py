@@ -1,8 +1,7 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import ipdb
-
 from constants import PAUSE
+
+import numpy as np
+import ipdb
 
 
 def get_res_info(info_func, info_res, ans, ground, t_len=0.5, sample_every=0.001):
@@ -57,7 +56,7 @@ def get_diff(ans, max_idx, res, grnd_idx):
         res['ad_std'].append(np.std(a_diff))
 
     # get distance of correct answer from ideal
-    g_diff = ans.shape[0] - np.sum(ans[:, grnd_idx])
+    g_diff = np.ones(ans.shape[0]) - ans[:, grnd_idx]
     res['gd_mean'].append(np.mean(g_diff))
     res['gd_std'].append(np.std(g_diff))
 
@@ -79,3 +78,20 @@ def get_conf(ans, max_idx, res, grnd_idx):
     a_diff = ans[:, max_idx[0]] - ans[:, max_idx[1]]
     res['conf_mean'].append(np.mean(a_diff))
     res['conf_std'].append(np.std(a_diff))
+
+
+def add_to_pd(pd_list, desc, approach, pred, cor, sample_every):
+    """get all the stats and add them to a Pandas pre-dataframe"""
+    d_res = {'ad_mean': [], 'ad_std': [], 'gd_mean': [], 'gd_std': []}
+    c_res = {'conf_mean': [], 'conf_std': []}
+
+    # the mean is really wrong here
+    get_res_info(get_diff, d_res, pred, cor, desc['t_len'], sample_every)
+    get_res_info(get_conf, c_res, pred, cor, desc['t_len'], sample_every)
+    acc = get_acc(np.array(d_res['ad_mean']), desc['n_classes'])
+
+    pd_list.append((
+        desc["t_len"], desc["dims"], desc["n_classes"], approach, acc,
+        d_res['ad_mean'], d_res['ad_std'], d_res['gd_mean'], d_res['gd_std'],
+        c_res['conf_mean'], c_res['conf_std']
+    ))

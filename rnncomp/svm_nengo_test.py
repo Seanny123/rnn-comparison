@@ -1,13 +1,12 @@
 # based off of Aaron's SVM network in http://compneuro.uwaterloo.ca/publications/voelker2016a.html
 
+from constants import *
+from dataman import create_feed_net
+
 import nengo
 from nengolib.synapses import HeteroSynapse, Bandpass
-import scipy.io
 from sklearn import svm
-
-from constants import *
-from dataman import *
-from post import *
+import numpy as np
 
 
 def multisynapse(src, dest, sub_features):
@@ -52,8 +51,7 @@ def svm_freq(t_len, dims, n_classes, alif=False):
                 encoders = nengo.dists.UniformHypersphere(
                             surface=True).sample(features_per_dim, 1)
                 enc_list.append(encoders)
-                feat_pop = nengo.Ensemble(features_per_dim, 1, encoders=encoders,
-                    seed=SEED+dim)
+                feat_pop = nengo.Ensemble(features_per_dim, 1, encoders=encoders, seed=SEED+dim)
                 feat_pops.append(feat_pop)
 
                 sub_features = zip(
@@ -63,10 +61,7 @@ def svm_freq(t_len, dims, n_classes, alif=False):
                 feat_list.append(sub_features)
                 multisynapse(state.ensembles[dim], feat_pop, sub_features)
 
-            p_sig = nengo.Probe(feed_net.q_in, sample_every=sample_every, synapse=None)
             p_target = nengo.Probe(feed_net.get_ans, sample_every=sample_every, synapse=None)
-
-            p_normal = nengo.Probe(state.output, sample_every=sample_every, synapse=tau)
 
             p_features = [
                 nengo.Probe(
@@ -148,8 +143,8 @@ def svm_freq(t_len, dims, n_classes, alif=False):
             nengo.Connection(bias, scores,
                              transform=intercept[:, None], synapse=None)
 
-            p_out = nengo.Probe(predict.output)
-            p_correct = nengo.Probe(feed_net.get_ans)
+            p_out = nengo.Probe(predict.output, sample_every=sample_every)
+            p_correct = nengo.Probe(feed_net.get_ans, sample_every=sample_every)
 
         print("test simulation start")
         sim_test = nengo.Simulator(test_model)

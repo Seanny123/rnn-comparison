@@ -38,7 +38,7 @@ def ortho_nearest(d):
     return np.dot(p, np.linalg.inv(sqrtm(np.dot(p.T, p))))
 
 
-def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec", save_res=True):
+def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec", save_dir="./datasets"):
     """given length t_len, dimensions dim, make number of classes given 
     n_classes in terms of a specific signal"""
 
@@ -146,14 +146,14 @@ def mk_cls_dataset(t_len=1, dims=1, n_classes=2, freq=10, class_type="cont_spec"
     # write and return
     assert len(class_sig_list) == n_classes
 
-    filename = "./datasets/dataset_%scls_%s_%s_%s_%s" % (class_type, t_len, dims, n_classes, SEED)
     class_desc["class_type"] = class_type
     class_desc["t_len"] = t_len
     class_desc["dims"] = dims
     class_desc["n_classes"] = n_classes
     class_desc["SEED"] = SEED
 
-    if save_res:
+    if save_dir is not None:
+        filename = "%s/dataset_%scls_%s_%s_%s_%s" % (save_dir, class_type, t_len, dims, n_classes, SEED)
         np.savez(filename, class_sig_list=class_sig_list, class_desc=class_desc)
 
     return np.array(class_sig_list), class_desc

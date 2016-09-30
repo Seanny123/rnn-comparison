@@ -117,7 +117,7 @@ def lag(dataset, t_len, lags=3, width=10):
     return ret_val.flatten()
 
 
-def dat_repeat(dat, cor, repeats=3, rng=np.random.RandomState(SEED)):
+def dat_repeat(dat, cor, t_len, repeats=3, rng=np.random.RandomState(SEED)):
     """because online training is weird, shuffle the presentation order
     of the signal, but repeat the dataset"""
     sig_len = int((t_len + PAUSE)/dt)

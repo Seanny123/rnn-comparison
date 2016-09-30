@@ -1,12 +1,11 @@
 # run the most basic test to make sure the networks are working correctly
-import datetime
-
-import ipdb
-
 import rc_nengo_test
 import svm_nengo_test
 from dataman import *
 from augman import dat_shuffle
+
+import datetime
+import ipdb
 
 
 # load a dataset for training
