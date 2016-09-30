@@ -1,0 +1,9 @@
+nengo
+numpy
+pandas
+matplotlib
+seaborn
+IPython
+ipdb
+sklearn
+scipy
