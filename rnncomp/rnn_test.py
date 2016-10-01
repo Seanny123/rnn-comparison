@@ -1,3 +1,5 @@
+from constants import *
+
 import lasagne
 import nengo_lasagne
 import nengo
@@ -5,13 +7,8 @@ from nengo.processes import PresentInput
 import theano
 theano.config.floatX = "float32"
 
-import ipdb
 
-from constants import *
-from post import get_accuracy
-
-
-def vanilla(t_len, dims, n_classes):
+def vanilla(dims, n_classes):
 
     def train(datset, corset):
         """Test the vanilla RNN with Lasagne"""
@@ -61,7 +58,8 @@ def vanilla(t_len, dims, n_classes):
             nengo.Connection(input_node, rnn_layer)
             nengo.Connection(rnn_layer, output_node)
 
-            p_out = nengo.Probe(output_node)
+            # sample_every is really not working on this thing
+            p_out = nengo.Probe(output_node, sample_every=sample_every)
 
         sim = nengo_lasagne.Simulator(net)
 
@@ -76,9 +74,7 @@ def vanilla(t_len, dims, n_classes):
     def test(sim, testset, p_out):
         # test the network
         sim.run_steps(testset.shape[0])
-
-        # shape should be (time, n_classes) and (time, n_classes)
-        #return get_accuracy(sim.data[p_out].squeeze(), testset[1].reshape((-1, n_classes)), t_len)
-        return sim.data[p_out].squeeze()
+        sample_step = int(sample_every / dt)
+        return sim.data[p_out].squeeze()[::sample_step]
 
     return train, test

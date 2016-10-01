@@ -20,10 +20,10 @@ import sys
 from IPython.core import ultratb
 sys.excepthook = ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
-freq_list = [10, 10, 150,]
-class_type_list = ["cont_spec"]#, "orth_spec", "disc_spec"]
+freq_list = [10, 10, 20]
+class_type_list = ["cont_spec", "orth_spec", "disc_spec"]
 exp_iter = 1
-class_nums = [3]#, 5, 10, 20, 40]
+class_nums = [3, 5, 10, 20, 40]
 
 # detailed results for debugging later saved as numpy archive
 rc_pred = []
@@ -88,12 +88,12 @@ for c_i, cls_type in enumerate(class_type_list):
 
             add_to_pd(pd_res, desc, "vRNN", van_pred[-1], van_cor[-1], sample_every)
 
-            print("\n\n Finished Iteration %s For Class %s %s" % (e_i, cls_type, n_classes))
+            current_time = datetime.datetime.now().strftime("%I:%M:%S")
+            print("\n\n Finished Iteration %s For Class %s %s at %s" % (e_i, cls_type, n_classes, current_time))
             print("Accuracy RC:%s, SVM:%s, vRNN:%s\n\n" % (pd_res[-3][acc_idx], pd_res[-2][acc_idx], pd_res[-1][acc_idx]))
 
 
 # save raw results
-ipdb.set_trace()
 class_desc = dict()
 class_desc["t_len"] = desc["t_len"]
 class_desc["dims"] = desc["dims"]
@@ -102,16 +102,15 @@ class_desc["sample_every"] = sample_every
 class_desc["PAUSE"] = PAUSE
 class_desc["exp_iter"] = exp_iter
 
-filename = "results/class_exp_res_%s" %(datetime.datetime.now().strftime("%I_%M_%S"))
+filename = "../results/class_exp_res_%s" % (datetime.datetime.now().strftime("%I_%M_%S"))
 np.savez(filename,
          rc_res={"pred": rc_pred, "cor": rc_cor},
          svm_res={"pred": svm_pred, "cor": svm_cor},
          van_res={"pred": van_pred, "cor": van_cor},
          class_desc=class_desc)
 
-ipdb.set_trace()
 # save processed results
 df = pd.DataFrame(pd_res, columns=pd_columns)
-hdf = pd.HDFStore("results/class_exp_res_%s.h5" % (datetime.datetime.now().strftime("%I_%M_%S")))
+hdf = pd.HDFStore("../results/class_exp_res_%s.h5" % (datetime.datetime.now().strftime("%I_%M_%S")))
 df.to_hdf(hdf, 'class_exp_res')
 ipdb.set_trace()
