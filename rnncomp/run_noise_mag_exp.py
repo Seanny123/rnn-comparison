@@ -18,38 +18,44 @@ import ipdb
 
 import sys
 from IPython.core import ultratb
-sys.excepthook = ultratb.FormattedTB(mode='Verbose',
-     color_scheme='Linux', call_pdb=1)
+sys.excepthook = ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
-freq_list = [10, 10, 150,]
+freq_list = [10, 10, 20,]
 class_type_list = ["cont_spec", "orth_spec", "disc_spec",]
 exp_iter = 10
 n_classes = 10
-rc_acc = []
-svm_acc = []
-rc_diff = []
-svm_diff = []
+
 noise_funcs = [
     add_rand_noise,
     add_rand_noise,
     add_rand_noise,
     add_rand_noise,
 ]
-
 noise_kw_args = [
-    {"scale":0.0},
-    {"scale":0.2},
-    {"scale":0.4},
-    {"scale":0.6},
+    {"scale": 0.0},
+    {"scale": 0.2},
+    {"scale": 0.4},
+    {"scale": 0.6},
 ]
+
+# detailed results for debugging later saved as numpy archive
+rc_pred = []
+svm_pred = []
+van_pred = []
+rc_cor = []
+svm_cor = []
+van_cor = []
+
+# summary of results for plotting later to be converted into Pandas
+pd_columns = ['t_len', 'dims', 'n_classes', 'approach', 'accuracy',
+              'ad_mean', 'ad_std', 'gd_mean', 'gd_std',
+              'conf_mean', 'conf_std']
+pd_res = []
 
 noise_names = []
 for n_f in noise_funcs:
     noise_names.append(n_f.__name__)
 
-# figure out how much noise is needed before degredation
-# then run it
-# then try combining noise
 
 for c_i, cls_type in enumerate(class_type_list):
     for n_i, noise in enumerate(noise_funcs):
