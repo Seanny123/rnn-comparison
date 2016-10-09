@@ -90,7 +90,8 @@ for c_i, cls_type in enumerate(class_type_list):
 
             current_time = datetime.datetime.now().strftime("%I:%M:%S")
             print("\n\n Finished Iteration %s For Class %s %s at %s" % (e_i, cls_type, n_classes, current_time))
-            print("Accuracy RC:%s, SVM:%s, vRNN:%s\n\n" % (pd_res[-3][acc_idx], pd_res[-2][acc_idx], pd_res[-1][acc_idx]))
+            print("Accuracy RC:%s, SVM:%s, vRNN:%s\n\n"
+                  % (pd_res[-3][acc_idx], pd_res[-2][acc_idx], pd_res[-1][acc_idx]))
 
 
 # save raw results

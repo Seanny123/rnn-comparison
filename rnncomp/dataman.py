@@ -315,6 +315,7 @@ class DataFeed(object):
 
             self.time = 0.0
             self.sig_time = 0
+
         elif self.time > self.pause_time:
             self.paused = False
 
@@ -322,9 +323,11 @@ class DataFeed(object):
             return_val = self.qs[self.indices[self.data_index]][:, q_num]
             self.sig_time += 1
             return return_val
+
         else:
             #print("Pased")
             self.paused = True
+
         return np.zeros(self.dims)
 
 

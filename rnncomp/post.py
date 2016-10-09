@@ -87,9 +87,9 @@ def add_to_pd(pd_list, desc, approach, pred, cor, sample_every, other_entry=list
 
     append_list = [desc["t_len"], desc["dims"], desc["n_classes"], approach]
 
+    get_res_info(get_diff, d_res, pred, cor, desc['t_len'], sample_every)
     acc = get_acc(np.array(d_res['ad_mean']), desc['n_classes'])
     append_list += [acc]
-    get_res_info(get_diff, d_res, pred, cor, desc['t_len'], sample_every)
     append_list += [d_res['ad_mean'], d_res['ad_std'], d_res['gd_mean'], d_res['gd_std']]
     get_res_info(get_conf, c_res, pred, cor, desc['t_len'], sample_every)
     append_list += [c_res['conf_mean'], c_res['conf_std']]

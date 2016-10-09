@@ -61,7 +61,7 @@ def run_exp(dat, desc, exp_iter, pd_res, res_dict, noise_func=None, noise_kw_arg
         ann_t_dat, ann_t_cor = make_run_args_ann(*shuf_dat)
 
         # run vRNN
-        run_svm(res_dict["van_res"]["pred"], res_dict["van_res"]["cor"],
+        run_van(res_dict["van_res"]["pred"], res_dict["van_res"]["cor"],
                 ann_dat, ann_cor, (ann_t_dat, ann_t_cor), desc, pd_res, log_other)
 
         current_time = datetime.datetime.now().strftime("%I:%M:%S")

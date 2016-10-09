@@ -51,7 +51,7 @@ noise_names = [n_f.__name__ for n_f in noise_funcs]
 
 for n_i, noise_f in enumerate(noise_funcs):
     for c_i, cls_type in enumerate(class_type_list):
-        mk_res = mk_cls_dataset(t_len=0.25, dims=1, n_classes=n_classes,
+        mk_res = mk_cls_dataset(t_len=0.5, dims=1, n_classes=n_classes,
                                 freq=freq_list[c_i], class_type=cls_type, save_dir="../datasets")
         desc = mk_res[1]
         dat = np.array(mk_res[0])
