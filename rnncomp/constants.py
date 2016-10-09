@@ -8,3 +8,5 @@ PAUSE = 0.01
 n_neurons = 200
 # probe granularity
 sample_every = 0.005
+# for printing, which column is the accuracy
+acc_idx = 4

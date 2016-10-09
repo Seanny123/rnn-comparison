@@ -3,14 +3,16 @@ from nengo.processes import WhiteSignal, WhiteNoise
 from dataman import d3_scale
 from constants import *
 import numpy as np
+
 import json
+import itertools
 
 import matplotlib.pyplot as plt
 import ipdb
 
 
 # TODO: get rid of the amount argument
-def aug(dataset, desc, amount, func, kwargs):
+def aug(dataset, desc, amount, func, kwargs=None):
     """iterate through each class, augment it and save the result.
 
     The `amount` argument is to note the number of examples, but it isn't always used properly"""
@@ -21,11 +23,8 @@ def aug(dataset, desc, amount, func, kwargs):
             np.zeros((amount, desc["dims"], int(desc["t_len"]/dt)))
         )
 
-    # TODO: tell these for-loops to calm the hell down
-    for c_i in xrange(len(dataset)):
-        for s_i in xrange(amount):
-            for d_i in xrange(desc["dims"]):
-                new_data[c_i][s_i, d_i] = func(dataset[c_i][s_i][d_i], desc["t_len"], **kwargs)
+    for c_i, s_i, d_i in itertools.product(xrange(len(dataset)), xrange(amount), xrange(desc["dims"])):
+        new_data[c_i][s_i, d_i] = func(dataset[c_i][s_i][d_i], desc["t_len"], **kwargs)
 
     filename = "../datasets/dataset_%scls_%s_%s_%s_%s_aug_%s" %(
         desc["class_type"],

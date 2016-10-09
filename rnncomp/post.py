@@ -80,18 +80,21 @@ def get_conf(ans, max_idx, res, grnd_idx):
     res['conf_std'].append(np.std(a_diff))
 
 
-def add_to_pd(pd_list, desc, approach, pred, cor, sample_every):
+def add_to_pd(pd_list, desc, approach, pred, cor, sample_every, other_entry=list()):
     """get all the stats and add them to a Pandas pre-dataframe"""
     d_res = {'ad_mean': [], 'ad_std': [], 'gd_mean': [], 'gd_std': []}
     c_res = {'conf_mean': [], 'conf_std': []}
 
-    # the mean is really wrong here
-    get_res_info(get_diff, d_res, pred, cor, desc['t_len'], sample_every)
-    get_res_info(get_conf, c_res, pred, cor, desc['t_len'], sample_every)
-    acc = get_acc(np.array(d_res['ad_mean']), desc['n_classes'])
+    append_list = [desc["t_len"], desc["dims"], desc["n_classes"], approach]
 
-    pd_list.append((
-        desc["t_len"], desc["dims"], desc["n_classes"], approach, acc,
-        d_res['ad_mean'], d_res['ad_std'], d_res['gd_mean'], d_res['gd_std'],
-        c_res['conf_mean'], c_res['conf_std']
-    ))
+    acc = get_acc(np.array(d_res['ad_mean']), desc['n_classes'])
+    append_list += [acc]
+    get_res_info(get_diff, d_res, pred, cor, desc['t_len'], sample_every)
+    append_list += [d_res['ad_mean'], d_res['ad_std'], d_res['gd_mean'], d_res['gd_std']]
+    get_res_info(get_conf, c_res, pred, cor, desc['t_len'], sample_every)
+    append_list += [c_res['conf_mean'], c_res['conf_std']]
+
+    if len(other_entry) > 0:
+        append_list += other_entry
+
+    pd_list.append(tuple(append_list))
