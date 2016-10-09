@@ -1,4 +1,5 @@
 # Different augmentation functions
+import nengo
 from nengo.processes import WhiteSignal, WhiteNoise
 from dataman import d3_scale
 from constants import *
@@ -78,13 +79,12 @@ def shot_noise(dataset, t_len, shots=3, width=2):
     # no need to rescale
     return ret_val.flatten()
 
-"""
- filtering a signal doesn't need to be a function, because we have no
- idea what we're going to be filtering with, other than a LowPass for lolz
-"""
+
+def low_filt(dataset, t_len, tau=0.01):
+    return nengo.LowPass(tau).filtfilt(dataset)
 
 
-def offset(dataset, scale=0.1):
+def offset(dataset, t_len, scale=0.1):
     """shift and normalize"""
     if scale > 0.1:
         out_range = (np.min(dataset), np.max(dataset+scale))

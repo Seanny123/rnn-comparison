@@ -41,13 +41,36 @@ def run_van(van_pred, van_cor, dat_arg, dat_cor, test_arg, desc, pd_res, log_oth
     add_to_pd(pd_res, desc, "vRNN", van_pred[-1], van_cor[-1], sample_every, log_other)
 
 
-def run_exp(dat, desc, exp_iter, pd_res, res_dict, noise_func=None, noise_kw_args=None, log_other=list()):
-    noise_kw_args = noise_kw_args or {}
+def make_noisy_arg(dat, desc, noise_func=None, noise_kw_args=None):
 
-    for e_i in range(exp_iter):
+    def f():
+        aug_res = aug(dat, desc, 1, noise_func, noise_kw_args)
+        dat_arg, dat_cor = make_run_args_nengo(np.array(aug_res))
+
+        aug_res = aug(dat, desc, 1, noise_func, noise_kw_args)
+        t_dat_arg, t_dat_cor = make_run_args_nengo(np.array(aug_res))
+        test_arg = dat_shuffle(t_dat_arg, t_dat_cor)
+
+        return dat_arg, dat_cor, test_arg
+
+    return f
+
+
+def make_plain_arg(dat, desc, noise_func=None, noise_kw_args=None):
+    def f():
         aug_res = aug(dat, desc, 1, noise_func, noise_kw_args)
         dat_arg, dat_cor = make_run_args_nengo(np.array(aug_res))
         test_arg = dat_shuffle(dat_arg, dat_cor)
+        return dat_arg, dat_cor, test_arg
+
+    return f
+
+
+def run_exp(desc, exp_iter, pd_res, res_dict, make_arg_func, log_other=list()):
+
+    for e_i in range(exp_iter):
+
+        dat_arg, dat_cor, test_arg = make_arg_func()
 
         # run Nengo nets
         run_rc(res_dict["rc_res"]["pred"], res_dict["rc_res"]["cor"],

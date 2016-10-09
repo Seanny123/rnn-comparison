@@ -4,7 +4,7 @@
 from constants import *
 from dataman import mk_cls_dataset
 from augman import add_rand_noise
-from run_utils import run_exp, save_results
+from run_utils import run_exp, save_results, make_noisy_arg
 
 import numpy as np
 
@@ -56,7 +56,9 @@ for n_i, noise_f in enumerate(noise_funcs):
         desc = mk_res[1]
         dat = np.array(mk_res[0])
 
-        run_exp(dat, desc, exp_iter, pd_res, res_dict, noise_f, noise_kw_args[n_i],
+        make_f = make_noisy_arg(dat, desc, noise_f, noise_kw_args)
+
+        run_exp(desc, exp_iter, pd_res, res_dict, make_f,
                 log_other=[noise_kw_args[n_i]["scale"]])
         current_time = datetime.datetime.now().strftime("%I:%M:%S")
         print("Finished %s at %s" % (cls_type, current_time))
