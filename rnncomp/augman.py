@@ -17,6 +17,7 @@ def aug(dataset, desc, amount, func, kwargs=None):
     """iterate through each class, augment it and save the result.
 
     The `amount` argument is to note the number of examples, but it isn't always used properly"""
+    kwargs = kwargs or {}
     new_data = []
 
     for _ in range(desc["n_classes"]):
