@@ -56,7 +56,7 @@ for n_i, noise_f in enumerate(noise_funcs):
         desc = mk_res[1]
         dat = np.array(mk_res[0])
 
-        make_f = make_noisy_arg(dat, desc, noise_f, noise_kw_args)
+        make_f = make_noisy_arg(dat, desc, noise_f, noise_kw_args[n_i])
 
         run_exp(desc, exp_iter, pd_res, res_dict, make_f,
                 log_other=[noise_kw_args[n_i]["scale"]])

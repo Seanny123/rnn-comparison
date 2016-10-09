@@ -82,7 +82,7 @@ def shot_noise(dataset, t_len, shots=3, width=2):
 
 
 def low_filt(dataset, t_len, tau=0.01):
-    return nengo.LowPass(tau).filtfilt(dataset)
+    return nengo.Lowpass(tau).filtfilt(dataset)
 
 
 def offset(dataset, t_len, scale=0.1):
