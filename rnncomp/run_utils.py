@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 import datetime
+import ipdb
 
 
 def run_rc(rc_pred, rc_cor, dat_arg, dat_cor, test_arg, desc, pd_res, log_other):
@@ -99,7 +100,8 @@ def save_results(pd_res, pd_columns, res_dict, base_name="", class_desc=None):
     filename = "../results/%s_%s" % (base_name, datetime.datetime.now().strftime("%I_%M_%S"))
     np.savez(filename, res_dict["rc_res"], res_dict["svm_res"], res_dict["van_res"], class_desc=class_desc)
 
+    ipdb.set_trace()
     # save processed results
     df = pd.DataFrame(pd_res, columns=pd_columns)
     hdf = pd.HDFStore("../results/%s_%s.h5" % (base_name, datetime.datetime.now().strftime("%I_%M_%S")))
-    df.to_hdf(hdf, 'class_exp_res')
+    df.to_hdf(hdf, base_name)

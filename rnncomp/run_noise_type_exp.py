@@ -17,14 +17,14 @@ sys.excepthook = ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_
 
 freq_list = [10, 10, 20]
 class_type_list = ["cont_spec", "orth_spec", "disc_spec"]
-exp_iter = 1 #10
+exp_iter = 10
 n_classes = 10
 
 noise_funcs = [
     add_rand_noise,
-    # shot_noise,
-    # offset,
-    # low_filt,
+    shot_noise,
+    offset,
+    low_filt,
 ]
 
 # detailed results for debugging later saved as numpy archive
