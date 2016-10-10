@@ -61,7 +61,7 @@ for n_i, noise_f in enumerate(noise_funcs):
         run_exp(desc, exp_iter, pd_res, res_dict, make_f,
                 log_other=[noise_kw_args[n_i]["scale"]])
         current_time = datetime.datetime.now().strftime("%I:%M:%S")
-        print("Finished %s at %s" % (cls_type, current_time))
+        print("Finished %s at %s\n" % (cls_type, current_time))
 
 
 # save raw results
