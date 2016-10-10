@@ -13,8 +13,8 @@ import datetime
 import ipdb
 
 
-def run_rc(rc_pred, rc_cor, dat_arg, dat_cor, test_arg, desc, pd_res, log_other):
-    rc_train, rc_test = rc_nengo_test.reservoir(desc["t_len"], desc["dims"], desc["n_classes"])
+def run_rc(rc_pred, rc_cor, dat_arg, dat_cor, test_arg, desc, pd_res, log_other=list(), alif=False):
+    rc_train, rc_test = rc_nengo_test.reservoir(desc["t_len"], desc["dims"], desc["n_classes"], alif)
     test_model = rc_train(dat_arg, dat_cor)
     tmp_res = rc_test(*test_model, testset=test_arg)
     rc_pred.append(tmp_res[0])
@@ -23,8 +23,8 @@ def run_rc(rc_pred, rc_cor, dat_arg, dat_cor, test_arg, desc, pd_res, log_other)
     add_to_pd(pd_res, desc, "RC", rc_pred[-1], rc_cor[-1], sample_every, log_other)
 
 
-def run_svm(svm_pred, svm_cor, dat_arg, dat_cor, test_arg, desc, pd_res, log_other):
-    svm_train, svm_test = svm_nengo_test.svm_freq(desc["t_len"], desc["dims"], desc["n_classes"])
+def run_svm(svm_pred, svm_cor, dat_arg, dat_cor, test_arg, desc, pd_res, log_other=list(), alif=False):
+    svm_train, svm_test = svm_nengo_test.svm_freq(desc["t_len"], desc["dims"], desc["n_classes"], alif)
     test_model = svm_train(dat_arg, dat_cor)
     tmp_res = svm_test(*test_model, testset=test_arg)
     svm_pred.append(tmp_res[0])
@@ -65,6 +65,23 @@ def make_plain_arg(dat, desc, noise_func=None, noise_kw_args=None):
         return dat_arg, dat_cor, test_arg
 
     return f
+
+
+def run_alif_exp(desc, exp_iter, pd_res, res_dict, make_arg_func):
+
+    for e_i in range(exp_iter):
+
+        dat_arg, dat_cor, test_arg = make_arg_func()
+
+        # run Nengo nets only
+        run_rc(res_dict["rc_res"]["pred"], res_dict["rc_res"]["cor"],
+               dat_arg, dat_cor, test_arg, desc, pd_res, alif=True)
+        run_svm(res_dict["svm_res"]["pred"], res_dict["svm_res"]["cor"],
+                dat_arg, dat_cor, test_arg, desc, pd_res, alif=True)
+
+        current_time = datetime.datetime.now().strftime("%I:%M:%S")
+        print("\n\n Finished Iteration %s at %s" % (e_i, current_time))
+        print("Accuracy RC:%s, SVM:%s\n\n" % (pd_res[-2][acc_idx], pd_res[-1][acc_idx]))
 
 
 def run_exp(desc, exp_iter, pd_res, res_dict, make_arg_func, log_other=list()):
