@@ -17,14 +17,14 @@ sys.excepthook = ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_
 
 freq_list = [10, 10, 20]
 class_type_list = ["cont_spec", "orth_spec", "disc_spec"]
-exp_iter = 10
+exp_iter = 1 #10
 n_classes = 10
 
 noise_funcs = [
     add_rand_noise,
-    shot_noise,
-    offset,
-    low_filt,
+    # shot_noise,
+    # offset,
+    # low_filt,
 ]
 
 # detailed results for debugging later saved as numpy archive
@@ -36,7 +36,7 @@ res_dict["van_res"] = {"pred": [], "cor": []}
 # summary of results for plotting later to be converted into Pandas
 pd_columns = ['t_len', 'dims', 'n_classes', 'approach', 'accuracy',
               'ad_mean', 'ad_std', 'gd_mean', 'gd_std',
-              'conf_mean', 'conf_std', "noise magnitude"]
+              'conf_mean', 'conf_std', "noise type"]
 pd_res = []
 
 desc = dict()
@@ -53,7 +53,7 @@ for n_i, noise_f in enumerate(noise_funcs):
         make_f = make_noisy_arg(dat, desc, noise_f)
 
         run_exp(desc, exp_iter, pd_res, res_dict, make_f,
-                log_other=noise_names[n_i])
+                log_other=[noise_names[n_i]])
         current_time = datetime.datetime.now().strftime("%I:%M:%S")
         print("Finished %s at %s" % (cls_type, current_time))
 

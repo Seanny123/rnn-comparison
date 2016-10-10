@@ -49,7 +49,7 @@ for c_i, cls_type in enumerate(class_type_list):
         run_exp(desc, exp_iter, pd_res, res_dict, make_f)
 
         current_time = datetime.datetime.now().strftime("%I:%M:%S")
-        print("Finished %s at %s" % (n_casses, current_time))
+        print("Finished %s at %s" % (n_classes, current_time))
 
 
 # save raw results
