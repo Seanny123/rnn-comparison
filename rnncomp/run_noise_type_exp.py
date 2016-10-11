@@ -24,7 +24,7 @@ noise_funcs = [
     add_rand_noise,
     shot_noise,
     offset,
-    low_filt,
+    low_filt
 ]
 
 # detailed results for debugging later saved as numpy archive
@@ -56,7 +56,6 @@ for n_i, noise_f in enumerate(noise_funcs):
                 log_other=[noise_names[n_i]])
         current_time = datetime.datetime.now().strftime("%I:%M:%S")
         print("Finished %s at %s\n" % (cls_type, current_time))
-
 
 # save raw results
 class_desc = dict()
