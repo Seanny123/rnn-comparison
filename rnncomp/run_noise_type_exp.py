@@ -24,7 +24,16 @@ noise_funcs = [
     add_rand_noise,
     shot_noise,
     offset,
-    low_filt
+    low_filt,
+    add_rand_noise
+]
+
+noise_kw_args = [
+    {},
+    {},
+    {},
+    {},
+    {"scale": 0.003, "sig": True}
 ]
 
 # detailed results for debugging later saved as numpy archive
@@ -42,6 +51,7 @@ pd_res = []
 desc = dict()
 
 noise_names = [n_f.__name__ for n_f in noise_funcs]
+noise_names[-1] = "whitenoise"
 
 for n_i, noise_f in enumerate(noise_funcs):
     for c_i, cls_type in enumerate(class_type_list):
@@ -50,7 +60,7 @@ for n_i, noise_f in enumerate(noise_funcs):
         desc = mk_res[1]
         dat = np.array(mk_res[0])
 
-        make_f = make_noisy_arg(dat, desc, noise_f)
+        make_f = make_noisy_arg(dat, desc, noise_f, noise_kw_args=noise_kw_args[n_i])
 
         run_exp(desc, exp_iter, pd_res, res_dict, make_f,
                 log_other=[noise_names[n_i]])
