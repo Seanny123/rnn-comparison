@@ -7,3 +7,11 @@ IPython
 ipdb
 sklearn
 scipy
+tables
+jupyter
+nengolib
+
+# install lasagne from source
+Theano==0.8.0
+https://github.com/Lasagne/Lasagne/archive/master.zip
+
