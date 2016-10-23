@@ -4,13 +4,27 @@ import lasagne
 import nengo_lasagne
 import nengo
 from nengo.processes import PresentInput
+import numpy as np
 import theano
 theano.config.floatX = "float32"
+
+import ipdb
+
+class Ident(lasagne.init.Initializer):
+    """Initialize weights with constant value.
+    Parameters
+    ----------
+     val : float
+        Constant value for weights.
+    """
+    def sample(self, shape):
+        assert shape[0] == shape[1]
+        return lasagne.utils.floatX(np.eye(shape[0]))
 
 
 def vanilla(dims, n_classes):
 
-    def train(datset, corset):
+    def train(datset, corset, w_rec_init=lasagne.init.HeUniform, nonlin=lasagne.nonlinearities.tanh):
         """Test the vanilla RNN with Lasagne"""
 
         # train up using Lasagne
@@ -18,7 +32,6 @@ def vanilla(dims, n_classes):
         N_BATCH = 1
         GRAD_CLIP = 100
         N_HIDDEN = 50  # does this make the gradient disappear?
-        nonlin = lasagne.nonlinearities.tanh
         w_init = lasagne.init.HeUniform
 
         # accept any one-dimensional vector into the input
@@ -33,7 +46,7 @@ def vanilla(dims, n_classes):
         l_rec = lasagne.layers.RecurrentLayer(
             l_reshape_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
             W_in_to_hid=w_init(),
-            W_hid_to_hid=w_init(),
+            W_hid_to_hid=w_rec_init(),
             nonlinearity=nonlin)
 
         l_dense = lasagne.layers.DenseLayer(l_rec, num_units=n_classes, nonlinearity=lasagne.nonlinearities.softmax)
