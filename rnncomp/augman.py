@@ -13,10 +13,10 @@ import ipdb
 
 
 # TODO: get rid of the amount argument
-def aug(dataset, desc, amount, func, kwargs=None):
+def aug(dataset, desc, amount, func, kwargs=None, save_dir="../datasets"):
     """iterate through each class, augment it and save the result.
 
-    The `amount` argument is to note the number of examples, but it isn't always used properly"""
+    The `amount` argument is to note the number of examples"""
     kwargs = kwargs or {}
     new_data = []
 
@@ -28,25 +28,27 @@ def aug(dataset, desc, amount, func, kwargs=None):
     for c_i, s_i, d_i in itertools.product(xrange(len(dataset)), xrange(amount), xrange(desc["dims"])):
         new_data[c_i][s_i, d_i] = func(dataset[c_i][s_i][d_i], desc["t_len"], **kwargs)
 
-    filename = "../datasets/dataset_%scls_%s_%s_%s_%s_aug_%s" %(
-        desc["class_type"],
-        desc["t_len"],
-        desc["dims"],
-        desc["n_classes"],
-        desc["SEED"],
-        func.__name__
-    )
+    if save_dir is not None:
+        filename = "%s/dataset_%scls_%s_%s_%s_%s_aug_%s" % (
+            save_dir,
+            desc["class_type"],
+            desc["t_len"],
+            desc["dims"],
+            desc["n_classes"],
+            desc["SEED"],
+            func.__name__
+        )
 
-    # Maintain a list of all the augmented files using json
-    with open("../datasets/aug_log.json", "r") as f_log:
-        file_list = json.loads(f_log.read())
-    file_list[filename] = {"desc":desc, "func": func.__name__, "kwargs":kwargs}
-    with open("../datasets/aug_log.json", "w") as f_log:
-        f_log.write(json.dumps(file_list))
+        # Maintain a list of all the augmented files using json
+        with open("%s/aug_log.json" % save_dir, "r") as f_log:
+            file_list = json.loads(f_log.read())
+        file_list[filename] = {"desc": desc, "func": func.__name__, "kwargs": kwargs}
+        with open("%s/aug_log.json" % save_dir, "w") as f_log:
+            f_log.write(json.dumps(file_list))
 
-    # TODO: give option to append to an existing file if the filename already exists
-    # especially with the same kwargs
-    np.savez(filename, class_sig_list=new_data, class_desc=desc)
+        # TODO: give option to append to an existing file if the filename already exists
+        # especially with the same kwargs
+        np.savez(filename, class_sig_list=new_data, class_desc=desc)
 
     return new_data
 
@@ -117,26 +119,22 @@ def lag(dataset, t_len, lags=3, width=10):
     return ret_val.flatten()
 
 
-def dat_repeat(dat, cor, t_len, repeats=3, rng=np.random.RandomState(SEED)):
-    """because online training is weird, shuffle the presentation order
-    of the signal, but repeat the dataset"""
-    sig_len = int((t_len + PAUSE)/dt)
-    sig_num = dat.shape[0]/sig_len
-    rp_len = dat.shape[0]
-    ind = np.arange(sig_num)
+def pre_arggen_repeat(dat, repeats=3):
+    """Repeat the dataset
 
-    # this repetition needs to be reshaped after repeating, maybe should use tile instead?
+    Expects data from a created dataset unformatted for specific network input"""
+
+    final_dat = np.tile(dat, (1, repeats, 1, 1))
+    return final_dat
+
+
+def post_arggen_repeat(dat, cor, repeats=3):
+    """Repeat the dataset
+
+    Expects data already formatted for Nengo input"""
+
     final_dat = np.tile(dat, (repeats, 1, 1))
     final_cor = np.tile(cor, (repeats, 1, 1))
-    for r_i in xrange(1, repeats):
-        rng.shuffle(ind)
-        dat_chunk = final_dat[r_i*rp_len:(r_i+1)*rp_len].reshape((sig_num, sig_len, 1, -1))
-        dat_chunk = dat_chunk[ind]
-        final_dat[r_i*rp_len:(r_i+1)*rp_len] = dat_chunk.reshape((rp_len, 1, -1))
-
-        cor_chunk = final_cor[r_i*rp_len:(r_i+1)*rp_len].reshape((sig_num, sig_len, 1, -1))
-        cor_chunk = cor_chunk[ind]
-        final_cor[r_i*rp_len:(r_i+1)*rp_len] = cor_chunk.reshape((rp_len, 1, -1))
 
     return final_dat, final_cor
 
@@ -145,3 +143,9 @@ def dat_shuffle(dat, cor, rng=np.random.RandomState(SEED)):
     idx = np.arange(cor.shape[0])
     rng.shuffle(idx)
     return dat[idx], cor[idx]
+
+
+def dat_repshuf(dat, cor, reps=3, rng=np.random.RandomState(SEED)):
+    r_dat, r_cor = post_arggen_repeat(dat, cor, reps)
+    return dat_shuffle(r_dat, r_cor, rng)
+

@@ -1,6 +1,6 @@
 from constants import *
-from dataman import mk_cls_dataset, make_run_args_ann
-from augman import dat_shuffle, add_rand_noise
+from dataman import mk_cls_dataset, make_run_args_ann, make_run_args_nengo
+from augman import dat_shuffle, add_rand_noise, dat_repshuf, pre_arggen_repeat, aug
 from run_utils import run_van, run_fancy_van, save_results, make_noisy_arg
 
 import numpy as np
@@ -41,24 +41,27 @@ for c_i, cls_type in enumerate(class_type_list):
     desc = mk_res[1]
     dat = np.array(mk_res[0])
 
-    make_f = make_noisy_arg(dat, desc, add_rand_noise, noise_kw_args={"scale": 0.01, "sig": True})
+    make_basic_arg = make_noisy_arg(dat, desc, add_rand_noise, noise_kw_args={"scale": 0.01, "sig": True})
 
     for e_i in range(exp_iter):
-        dat_arg, dat_cor, test_arg = make_f()
+        dat_arg, dat_cor, test_arg = make_basic_arg()
 
-        # shuffle only
-        ann_dat, ann_cor = make_run_args_ann(dat_arg, dat_cor)
+        # test data
         shuf_dat = dat_shuffle(*test_arg)
         ann_t_dat, ann_t_cor = make_run_args_ann(*shuf_dat)
+
+        # shuffle only, as a baseline for comparison
+        rep_dat, rep_cor = dat_repshuf(dat_arg, dat_cor)
+        ann_dat, ann_cor = make_run_args_ann(rep_dat, rep_cor)
 
         # run vRNN
         run_van(res_dict["van_res"]["pred"], res_dict["van_res"]["cor"],
                 ann_dat, ann_cor, (ann_t_dat, ann_t_cor), desc, pd_res, log_other="repeat")
 
         # shuffle with noise
-        ann_dat, ann_cor = make_run_args_ann(dat_arg, dat_cor)
-        shuf_dat = dat_shuffle(*test_arg)
-        ann_t_dat, ann_t_cor = make_run_args_ann(*shuf_dat)
+        rep_noisy = aug(pre_arggen_repeat(dat), desc, dup_num, add_rand_noise, kwargs={"scale": 0.01, "sig": True})
+        rep_dat, rep_cor = make_run_args_nengo(np.array(rep_noisy))
+        ann_dat, ann_cor = make_run_args_ann(rep_dat, rep_cor)
 
         # run vRNN
         run_van(res_dict["van_res"]["pred"], res_dict["van_res"]["cor"],

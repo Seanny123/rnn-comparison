@@ -212,7 +212,7 @@ def make_run_args_nengo(fi):
     re_zer = dat.reshape((tot_sigs, dims, t_steps))
     final_dat = np.concatenate((zer, re_zer), axis=2)
 
-    zer_shape = (cls_num, dims, pause_size)
+    zer_shape = (cls_num*sig_num, dims, pause_size)
     assert np.all(np.zeros(zer_shape) == final_dat[:, :dims, :pause_size])
 
     # get the correct answer
@@ -233,17 +233,18 @@ def make_run_args_ann(n_dat, n_cor):
     dim_last = n_dat.reshape((-1, t_with_pause, dims))
     final_dat = dim_last.reshape((-1, 1, dims))
 
-    pause_size = int(PAUSE/dt)
-    n_classes = n_cor.shape[0]
-    tot_sigs = n_cor.shape[1]
+    pause_size = int(PAUSE / dt)
+    tot_sigs = n_cor.shape[0]
+    n_classes = n_cor.shape[1]
     t_steps = t_with_pause - pause_size
 
-    zer = np.zeros((tot_sigs, n_classes, pause_size), dtype=np.int8)
-    re_zer = np.repeat(n_cor, t_steps, axis=1).reshape((tot_sigs, n_classes, t_steps))
-    cor_with_pause = np.concatenate((zer, re_zer), axis=2)
-    # put the time-steps last, with dims first and then transpose
-    cor = cor_with_pause.reshape((n_classes, 1, -1)).T
-    return final_dat, cor
+    zer = np.zeros((tot_sigs, pause_size, n_classes), dtype=np.int8)
+    re_zer = np.repeat(n_cor, t_steps, axis=0).reshape((tot_sigs, -1, n_classes))
+    final_cor = np.concatenate((zer, re_zer), axis=1).reshape(-1, 1, n_classes)
+
+    assert final_cor.shape[0] == final_dat.shape[0]
+
+    return final_dat, final_cor
 
 
 class DataFeed(object):
