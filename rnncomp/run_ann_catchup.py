@@ -1,7 +1,7 @@
 from constants import *
 from dataman import mk_cls_dataset, make_run_args_ann, make_run_args_nengo
 from augman import dat_shuffle, add_rand_noise, dat_repshuf, pre_arggen_repeat, aug
-from run_utils import run_van, run_fancy_van, save_results, make_noisy_arg
+from run_utils import run_van, run_fancy_van, save_results, make_noisy_arg, run_rc
 
 import numpy as np
 
@@ -18,8 +18,9 @@ os.environ["THEANO_FLAGS"] = "mode=FAST_RUN,device=gpu,floatX=float32"
 freq_list = [10, 10, 20]
 class_type_list = ["cont_spec", "orth_spec", "disc_spec"]
 exp_iter = 10
-n_classes = 10
+n_classes = 5
 dup_num = 10
+noise_scale = 0.005
 
 # detailed results for debugging later saved as numpy archive
 res_dict = dict()
@@ -41,7 +42,7 @@ for c_i, cls_type in enumerate(class_type_list):
     desc = mk_res[1]
     dat = np.array(mk_res[0])
 
-    make_basic_arg = make_noisy_arg(dat, desc, add_rand_noise, noise_kw_args={"scale": 0.01, "sig": True})
+    make_basic_arg = make_noisy_arg(dat, desc, add_rand_noise, noise_kw_args={"scale": noise_scale, "sig": True})
 
     for e_i in range(exp_iter):
         dat_arg, dat_cor, test_arg = make_basic_arg()
@@ -51,30 +52,36 @@ for c_i, cls_type in enumerate(class_type_list):
         ann_t_dat, ann_t_cor = make_run_args_ann(*shuf_dat)
 
         # shuffle only, as a baseline for comparison
-        rep_dat, rep_cor = dat_repshuf(dat_arg, dat_cor)
+        rep_dat, rep_cor = dat_repshuf(dat_arg, dat_cor, reps=dup_num)
         ann_dat, ann_cor = make_run_args_ann(rep_dat, rep_cor)
 
         # run vRNN
         run_van(res_dict["van_res"]["pred"], res_dict["van_res"]["cor"],
-                ann_dat, ann_cor, (ann_t_dat, ann_t_cor), desc, pd_res, log_other="repeat")
+                ann_dat, ann_cor, (ann_t_dat, ann_t_cor), desc, pd_res, log_other=["repeat"])
 
         # shuffle with noise
-        rep_noisy = aug(pre_arggen_repeat(dat), desc, dup_num, add_rand_noise, kwargs={"scale": 0.01, "sig": True})
+        rep_noisy = aug(pre_arggen_repeat(dat, dup_num), desc, dup_num,
+                        add_rand_noise, kwargs={"scale": noise_scale, "sig": True})
         rep_dat, rep_cor = make_run_args_nengo(np.array(rep_noisy))
+
+        # run the reservoir to make sure nothing weird is happening
+        run_rc(res_dict["rc_res"]["pred"], res_dict["rc_res"]["cor"],
+               rep_dat, rep_cor, test_arg, desc, pd_res, log_other=["repeat with noise"])
+
         ann_dat, ann_cor = make_run_args_ann(rep_dat, rep_cor)
 
         # run vRNN
         run_van(res_dict["van_res"]["pred"], res_dict["van_res"]["cor"],
-                ann_dat, ann_cor, (ann_t_dat, ann_t_cor), desc, pd_res, log_other="repeat with noise")
+                ann_dat, ann_cor, (ann_t_dat, ann_t_cor), desc, pd_res, log_other=["repeat with noise"])
 
         # run fancy vRNN
         run_fancy_van(res_dict["van_res"]["pred"], res_dict["van_res"]["cor"],
-                      ann_dat, ann_cor, (ann_t_dat, ann_t_cor), desc, pd_res, log_other="repeat with noise")
+                      ann_dat, ann_cor, (ann_t_dat, ann_t_cor), desc, pd_res, log_other=["repeat with noise"])
 
         current_time = datetime.datetime.now().strftime("%I:%M:%S")
         print("\n\n Finished Iteration %s at %s" % (e_i, current_time))
-        print("Accuracy shuffle:%s, with_noise:%s, fancy_init:%s\n\n"
-              % (pd_res[-3][acc_idx], pd_res[-2][acc_idx], pd_res[-1][acc_idx]))
+        print("Accuracy shuffle:%s, reservoir:%s, with_noise:%s, fancy_init:%s\n\n"
+              % (pd_res[-4][acc_idx], pd_res[-3][acc_idx], pd_res[-2][acc_idx], pd_res[-1][acc_idx]))
 
     current_time = datetime.datetime.now().strftime("%I:%M:%S")
     print("Finished %s at %s\n" % (cls_type, current_time))
@@ -88,7 +95,7 @@ class_desc["sample_every"] = sample_every
 class_desc["PAUSE"] = PAUSE
 class_desc["exp_iter"] = exp_iter
 
-base_name = "ann_catchup_res"
+base_name = "ann_catchup_res_%s" % dup_num
 
 save_results(pd_res, pd_columns, res_dict, base_name, class_desc)
 
