@@ -134,7 +134,7 @@ def post_arggen_repeat(dat, cor, repeats=3):
     Expects data already formatted for Nengo input"""
 
     final_dat = np.tile(dat, (repeats, 1, 1))
-    final_cor = np.tile(cor, (repeats, 1, 1))
+    final_cor = np.tile(cor, (repeats, 1))
 
     return final_dat, final_cor
 
@@ -148,4 +148,3 @@ def dat_shuffle(dat, cor, rng=np.random.RandomState(SEED)):
 def dat_repshuf(dat, cor, reps=3, rng=np.random.RandomState(SEED)):
     r_dat, r_cor = post_arggen_repeat(dat, cor, reps)
     return dat_shuffle(r_dat, r_cor, rng)
-
