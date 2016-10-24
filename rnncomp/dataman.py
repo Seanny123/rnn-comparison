@@ -243,6 +243,9 @@ def make_run_args_ann(n_dat, n_cor):
     final_cor = np.concatenate((zer, re_zer), axis=1).reshape(-1, 1, n_classes)
 
     assert final_cor.shape[0] == final_dat.shape[0]
+    ann_cor_idx = np.argmax(final_cor[pause_size + 1::t_with_pause].squeeze(), axis=1)
+    assert np.all(ann_cor_idx == np.argmax(n_cor, axis=1))
+    assert np.allclose(final_dat[0:t_with_pause].squeeze(), n_dat[0].squeeze())
 
     return final_dat, final_cor
 
