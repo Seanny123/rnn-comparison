@@ -1,2 +1,2 @@
-# rnn-comparison
-Comparing RNN architectures for SYDE556
+# RNN Comparison
+Comparing RNN architectures (spiking and Deep Learning) for SYDE675 using synthetic data.
