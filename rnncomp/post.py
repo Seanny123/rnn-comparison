@@ -94,6 +94,7 @@ def add_to_pd(pd_list, desc, approach, pred, cor, sample_every, other_entry=list
     get_res_info(get_conf, c_res, pred, cor, desc['t_len'], sample_every)
     append_list += [c_res['conf_mean'], c_res['conf_std']]
 
+    assert type(other_entry) is not str
     if len(other_entry) > 0:
         append_list += other_entry
 

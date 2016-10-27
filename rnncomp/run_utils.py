@@ -45,7 +45,8 @@ def run_van(van_pred, van_cor, dat_arg, dat_cor, test_arg, desc, pd_res, log_oth
 
 def run_fancy_van(van_pred, van_cor, dat_arg, dat_cor, test_arg, desc, pd_res, log_other):
     van_train, van_test = rnn_test.vanilla(desc["dims"], desc["n_classes"])
-    van_sim, p_out = van_train(dat_arg, dat_cor, w_rec_init=rnn_test.Ident, nonlin=lasagne.nonlinearities.rectify)
+    van_sim, p_out = van_train(dat_arg, dat_cor, w_rec_init=rnn_test.Ident,
+                               nonlin=lasagne.nonlinearities.rectify, learning_rate=0.001)
     van_pred.append(van_test(van_sim, test_arg[0], p_out))
     van_cor.append(test_arg[1])
 

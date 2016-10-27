@@ -24,7 +24,7 @@ class Ident(lasagne.init.Initializer):
 
 def vanilla(dims, n_classes):
 
-    def train(datset, corset, w_rec_init=lasagne.init.HeUniform, nonlin=lasagne.nonlinearities.tanh):
+    def train(datset, corset, w_rec_init=lasagne.init.HeUniform, nonlin=lasagne.nonlinearities.tanh, learning_rate=0.01):
         """Test the vanilla RNN with Lasagne"""
 
         # train up using Lasagne
@@ -79,7 +79,7 @@ def vanilla(dims, n_classes):
         sim.train({input_node: datset}, {output_node: corset},
                   #n_epochs=3, minibatch_size=None,
                   optimizer=lasagne.updates.adagrad,
-                  optimizer_kwargs={"learning_rate": 0.01},
+                  optimizer_kwargs={"learning_rate": learning_rate},
                   # since we're doing categorisation, this objective function is fine
                   objective=lasagne.objectives.categorical_crossentropy)
         return sim, p_out

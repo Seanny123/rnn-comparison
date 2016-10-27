@@ -27,10 +27,10 @@ noise_funcs = [
     add_rand_noise,
 ]
 noise_kw_args = [
-    {"scale": 0.0},
-    {"scale": 0.2},
-    {"scale": 0.4},
-    {"scale": 0.6},
+    {"scale": 0.003, "sig": False},
+    {"scale": 0.006, "sig": False},
+    {"scale": 0.01, "sig": False},
+    {"scale": 0.02, "sig": False},
 ]
 
 # detailed results for debugging later saved as numpy archive
@@ -73,7 +73,7 @@ class_desc["sample_every"] = sample_every
 class_desc["PAUSE"] = PAUSE
 class_desc["exp_iter"] = exp_iter
 
-base_name = "noise_mag_exp_res"
+base_name = "whitenoise_mag_exp_res"
 
 save_results(pd_res, pd_columns, res_dict, base_name, class_desc)
 

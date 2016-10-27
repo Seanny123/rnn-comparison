@@ -78,8 +78,8 @@ for c_i, cls_type in enumerate(class_type_list):
 
         current_time = datetime.datetime.now().strftime("%I:%M:%S")
         print("\n\n Finished Iteration %s at %s" % (e_i, current_time))
-        print("Accuracy shuffle:%s, reservoir:%s, with_noise:%s, fancy_init:%s\n\n"
-              % (pd_res[-4][acc_idx], pd_res[-3][acc_idx], pd_res[-2][acc_idx], pd_res[-1][acc_idx]))
+        print("Accuracy shuffle:%s, with_noise:%s, fancy_init:%s\n\n"
+              % (pd_res[-3][acc_idx], pd_res[-2][acc_idx], pd_res[-1][acc_idx]))
 
     current_time = datetime.datetime.now().strftime("%I:%M:%S")
     print("Finished %s at %s\n" % (cls_type, current_time))

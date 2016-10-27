@@ -13,10 +13,8 @@ import ipdb
 
 import sys
 from IPython.core import ultratb
-sys.excepthook = ultratb.FormattedTB(mode='Verbose',
-     color_scheme='Linux', call_pdb=1)
+sys.excepthook = ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=1)
 
-# TODO: find where the Nengo models usually fail!
 freq_list = [10, 10, 20]
 class_type_list = ["cont_spec", "orth_spec", "disc_spec"]
 exp_iter = 10
@@ -62,7 +60,7 @@ class_desc["sample_every"] = sample_every
 class_desc["PAUSE"] = PAUSE
 class_desc["exp_iter"] = exp_iter
 
-base_name = "class_exp_res"
+base_name = "alif_exp_res"
 
 save_results(pd_res, pd_columns, res_dict, base_name, class_desc)
 
